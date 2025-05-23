@@ -29,7 +29,10 @@ export default function Login() {
   return (
     <div className="flex min-h-screen">
       {/* Panel rojo izquierdo */}
-      <div className="w-1/2 bg-primary text-white flex items-center justify-center">
+      <div
+        className="w-1/2 text-white flex items-center justify-center"
+        style={{ backgroundColor: "var(--color-primary)" }}
+      >
         <div className="text-center space-y-2">
           <p className="font-bold text-lg">LABORATORIO DE ELECTRONICA</p>
         </div>
@@ -38,42 +41,40 @@ export default function Login() {
       {/* Panel blanco derecho */}
       <div className="w-1/2 bg-white flex items-center justify-center px-6">
         <form onSubmit={iniciarSesion} className="w-full max-w-sm space-y-5">
-          {/* Logo */}
           <div className="flex flex-col items-center mb-2">
             <img src={logo} alt="Logo" className="h-40 mb-2" />
           </div>
 
-          {/* Error */}
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
-          {/* Usuario */}
           <div>
             <label className="text-sm font-semibold text-gray-800">USUARIO</label>
             <input
               type="email"
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-md border-primary focus:outline-none shadow-sm"
+              className="w-full px-4 py-2 mt-1 border rounded-md"
+              style={{ borderColor: "var(--color-primary)" }}
               required
             />
           </div>
 
-          {/* Contraseña */}
           <div>
             <label className="text-sm font-semibold text-gray-800">CONTRASEÑA</label>
             <input
               type="password"
               value={contrasena}
               onChange={(e) => setContrasena(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-md border-primary focus:outline-none shadow-sm"
+              className="w-full px-4 py-2 mt-1 border rounded-md"
+              style={{ borderColor: "var(--color-primary)" }}
               required
             />
           </div>
 
-          {/* Botón */}
           <button
             type="submit"
-            className="w-full py-2 bg-primary hover:bg-red-700 text-white font-bold rounded-md"
+            style={{ backgroundColor: "var(--color-primary)" }}
+            className="w-full py-2 hover:brightness-90 text-white font-bold rounded-md"
           >
             INICIAR SESIÓN
           </button>
