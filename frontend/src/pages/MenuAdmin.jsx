@@ -1,6 +1,6 @@
 import Button from "../components/Button";
 
-export default function Menu() {
+export default function MenuAdmin() {
   return (
     <div className="flex flex-col text-white">
       <header
