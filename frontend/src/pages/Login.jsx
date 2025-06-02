@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 
 export default function Login() {
-  const [correo, setCorreo] = useState("");
+  const [nombreUsuario, setNombreUsuario] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [error, setError] = useState("");
   const navegar = useNavigate();
@@ -12,33 +12,30 @@ export default function Login() {
   const iniciarSesion = async (e) => {
     e.preventDefault();
     try {
-      const respuesta = await axios.post("http://localhost:3000/api/login", {
-        correo,
+      const respuesta = await axios.post("http://localhost:4000/login", {
+        nombre_usuario: nombreUsuario,
         contrasena,
       });
+
+      console.log("slkdavao")
 
       if (respuesta.data.token) {
         localStorage.setItem("token", respuesta.data.token);
         navegar("/registrar-prestamo");
       }
     } catch (err) {
-      setError("Correo o contraseña incorrectos");
+      setError("Usuario o contraseña incorrectos");
     }
   };
 
   return (
     <div className="flex min-h-screen">
-      {/* Panel rojo izquierdo */}
-      <div
-        className="w-1/2 text-white flex items-center justify-center"
-        style={{ backgroundColor: "var(--color-primary)" }}
-      >
+      <div className="w-1/2 text-white flex items-center justify-center" style={{ backgroundColor: "var(--color-primary)" }}>
         <div className="text-center space-y-2">
           <p className="font-bold text-lg">LABORATORIO DE ELECTRONICA</p>
         </div>
       </div>
 
-      {/* Panel blanco derecho */}
       <div className="w-1/2 bg-white flex items-center justify-center px-6">
         <form onSubmit={iniciarSesion} className="w-full max-w-sm space-y-5">
           <div className="flex flex-col items-center mb-2">
@@ -50,9 +47,9 @@ export default function Login() {
           <div>
             <label className="text-sm font-semibold text-gray-800">USUARIO</label>
             <input
-              type="email"
-              value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
+              type="text"
+              value={nombreUsuario}
+              onChange={(e) => setNombreUsuario(e.target.value)}
               className="w-full px-4 py-2 mt-1 border rounded-md"
               style={{ borderColor: "var(--color-primary)" }}
               required
