@@ -7,6 +7,7 @@ import RegistrarUsuario from "./pages/RegistrarUsuario";
 import RegistrarEstudiante from "./pages/RegistrarEstudiante";
 import EliminarUsuario from "./pages/EliminarUsuario";
 import GestionarMaterial from "./pages/GestionarMaterial";
+import ListadoPrestamos from "./pages/ListadoPrestamos";
 import React from "react";
 function App() {
   return (
@@ -20,7 +21,7 @@ function App() {
         <Route path="/registrar-estudiante" element={<RegistrarEstudiante />} />
         <Route path="/eliminar-usuario" element={<EliminarUsuario />} />
         <Route path="/material" element={<GestionarMaterial />} />
-
+        <Route path="/listado-prestamos" element={<ListadoPrestamos />} />
       </Routes>
     </BrowserRouter>
   );
