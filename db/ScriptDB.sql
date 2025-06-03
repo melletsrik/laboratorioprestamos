@@ -1,5 +1,11 @@
 Drop database if exists sistema_prestamos_electronica;
 create database sistema_prestamos_electronica;
+use sistema_prestamos_electronica;
+drop table if exists Detalle_Prestamo;
+drop table if exists Prestamo;
+drop table if exists Estado;
+Drop database if exists Prueba;
+create database Prueba;
 use Prueba;
 drop table if exists Detalle_Prestamo;
 drop table if exists Prestamo;
@@ -10,7 +16,6 @@ drop table if exists Usuario;
 drop table if exists Rol;
 drop table if exists Estudiante;
 drop table if exists Persona;
-
 
 Create table Persona(
     id_persona int not null auto_increment,
