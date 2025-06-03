@@ -1,37 +1,49 @@
 const express = require("express");
 const router = express.Router();
-const database = require("../database");
 const bcrypt = require("bcryptjs");
+const { getConnection } = require("../database");
 
-router.post("/usuarios", async (req, res) => {
+router.post("/registrar-usuario", async (req, res) => {
+  const { id_persona, nombre_usuario, password, rol } = req.body;
+
+  if (!id_persona || !nombre_usuario || !password || !rol) {
+    return res.status(400).json({ mensaje: "Faltan datos obligatorios" });
+  }
+
   try {
-    const { id_persona, id_rol, username, password } = req.body;
+    const pool = getConnection();
 
-    if (!id_persona || !id_rol || !username || !password) {
-      return res.status(400).json({ message: "Faltan datos obligatorios" });
+    // Verificar que persona exista
+    const [personaRows] = await pool.execute(
+      "SELECT * FROM Persona WHERE id_persona = ?",
+      [id_persona]
+    );
+    if (personaRows.length === 0) {
+      return res.status(404).json({ mensaje: "La persona no existe" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const connection = database.getConnection();
-
-    const existing = await connection.query(
-      "SELECT * FROM usuario WHERE username = ?",
-      [username]
+    // Verificar que no exista nombre_usuario duplicado
+    const [usuarioRows] = await pool.execute(
+      "SELECT * FROM Usuario WHERE nombre_usuario = ?",
+      [nombre_usuario]
     );
-
-    if (existing.length > 0) {
-      return res.status(409).json({ message: "El nombre de usuario ya existe" });
+    if (usuarioRows.length > 0) {
+      return res.status(409).json({ mensaje: "El nombre de usuario ya está en uso" });
     }
 
-    await connection.query(
-      `INSERT INTO usuario (id_persona, id_rol, username, password) VALUES (?, ?, ?, ?)`,
-      [id_persona, id_rol, username, hashedPassword]
+    // Hashear contraseña
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Insertar usuario
+    const [result] = await pool.execute(
+      "INSERT INTO Usuario (id_persona, nombre_usuario, password_, rol) VALUES (?, ?, ?, ?)",
+      [id_persona, nombre_usuario, passwordHash, rol]
     );
 
-    res.status(201).json({ message: "Usuario creado exitosamente" });
+    res.status(201).json({ mensaje: "Usuario creado", id_usuario: result.insertId });
   } catch (error) {
-    console.error("Error al crear usuario:", error);
-    res.status(500).json({ message: "Error al crear usuario" });
+    console.error(error);
+    res.status(500).json({ mensaje: "Error interno" });
   }
 });
 

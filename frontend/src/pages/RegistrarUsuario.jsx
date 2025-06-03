@@ -3,34 +3,60 @@ import axios from "axios";
 import logo from "../assets/logo.png";
 
 export default function RegistrarUsuario() {
-  const [nombre, setNombre] = useState("");
-  const [correo, setCorreo] = useState("");
-  const [contrasena, setContrasena] = useState("");
-  const [rol, setRol] = useState("estudiante"); // valores: estudiante, auxiliar, docente
-  const [mensaje, setMensaje] = useState("");
+  const [p_nRegistro, setRegistro] = useState("");
+  const [p_cNombre, setNombre] = useState("");
+  const [p_cApellido, setApellido] = useState("");
+  const [p_cNombreUsuario, setNombreUsuario] = useState("");
+  const [p_cPassword, setPassword] = useState("");
+  const [p_nRol, setRol] = useState(2); // 1=Admin, 2=Auxiliar
+  const [cMensaje, setMensaje] = useState("");
 
-  const registrar = async (e) => {
+  const f_registrar = async (e) => {
     e.preventDefault();
+
+    if (![1, 2].includes(Number(p_nRol))) {
+      setMensaje("El rol debe ser Administrador o Auxiliar.");
+      return;
+    }
+
     try {
-      const respuesta = await axios.post("http://localhost:4000/api/usuarios", {
-        nombre,
-        correo,
-        contrasena,
-        rol,
+      // Crear Persona
+      const personaRes = await axios.post(
+        "http://localhost:4000/personas/registrar-persona",
+        {
+          registro: p_nRegistro,
+          nombre: p_cNombre,
+          apellido: p_cApellido,
+        }
+      );
+
+      const idPersona = personaRes.data.id_persona;
+
+      // Crear Usuario
+      await axios.post("http://localhost:4000/usuarios/registrar-usuario", {
+        id_persona: idPersona,
+        nombre_usuario: p_cNombreUsuario,
+        password: p_cPassword,
+        rol: Number(p_nRol),
       });
+
       setMensaje("Usuario registrado correctamente.");
+
+      // Limpiar formulario
+      setRegistro("");
       setNombre("");
-      setCorreo("");
-      setContrasena("");
-      setRol("estudiante");
-    } catch (err) {
-      setMensaje("Hubo un error al registrar el usuario.");
+      setApellido("");
+      setNombreUsuario("");
+      setPassword("");
+      setRol(2);
+    } catch (error) {
+      console.error(error);
+      setMensaje("Error al registrar el usuario.");
     }
   };
 
   return (
     <div className="flex min-h-screen">
-      {/* Panel rojo izquierdo */}
       <div
         className="w-1/2 text-white flex items-center justify-center"
         style={{ backgroundColor: "var(--color-primary)" }}
@@ -40,72 +66,103 @@ export default function RegistrarUsuario() {
         </div>
       </div>
 
-      {/* Panel blanco derecho */}
       <div className="w-1/2 bg-white flex items-center justify-center px-6">
-        <form onSubmit={registrar} className="w-full max-w-sm space-y-5">
+        <form onSubmit={f_registrar} className="w-full max-w-sm space-y-4">
           <div className="flex flex-col items-center mb-2">
-            <img src={logo} alt="Logo" className="h-40 mb-2" />
+            <img src={logo} alt="Logo" className="h-32 mb-2" />
           </div>
 
-          {mensaje && <p className="text-sm text-center text-red-600">{mensaje}</p>}
+          {cMensaje && (
+            <p
+              className={`text-sm text-center ${
+                cMensaje.includes("correctamente")
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {cMensaje}
+            </p>
+          )}
 
           <div>
-            <label className="text-sm font-semibold text-gray-800">NOMBRE</label>
+            <label className="block font-semibold">Registro</label>
+            <input
+              type="number"
+              value={p_nRegistro}
+              onChange={(e) => setRegistro(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold">Nombre</label>
             <input
               type="text"
-              value={nombre}
+              value={p_cNombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-md"
-              style={{ borderColor: "var(--color-primary)" }}
+              className="w-full px-3 py-2 border rounded-md"
               required
             />
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-gray-800">CORREO</label>
+            <label className="block font-semibold">Apellido</label>
             <input
-              type="email"
-              value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-md"
-              style={{ borderColor: "var(--color-primary)" }}
+              type="text"
+              value={p_cApellido}
+              onChange={(e) => setApellido(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
               required
             />
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-gray-800">CONTRASEÑA</label>
+            <label className="block font-semibold">Nombre de Usuario</label>
+            <input
+              type="text"
+              value={p_cNombreUsuario}
+              onChange={(e) => setNombreUsuario(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold">Contraseña</label>
             <input
               type="password"
-              value={contrasena}
-              onChange={(e) => setContrasena(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-md"
-              style={{ borderColor: "var(--color-primary)" }}
+              value={p_cPassword}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md"
               required
             />
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-gray-800">ROL</label>
+            <label className="block font-semibold">Rol</label>
             <select
-              value={rol}
-              onChange={(e) => setRol(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-md"
-              style={{ borderColor: "var(--color-primary)" }}
+              value={p_nRol}
+              onChange={(e) => setRol(Number(e.target.value))}
+              className="w-full px-3 py-2 border rounded-md"
+              required
             >
-              <option value="estudiante">Estudiante</option>
-              <option value="auxiliar">Auxiliar</option>
-              <option value="docente">Docente</option>
+              <option value={1}>Administrador</option>
+              <option value={2}>Auxiliar</option>
             </select>
           </div>
 
-          <button
-            type="submit"
-            style={{ backgroundColor: "var(--color-primary)" }}
-            className="w-full py-2 hover:brightness-90 text-white font-bold rounded-md"
-          >
-            REGISTRAR
-          </button>
+          <div className="text-center">
+            <button
+              type="submit"
+              className="text-white px-6 py-2 rounded-md"
+              style={{ backgroundColor: "var(--color-primary)", 
+                hover: "var(--color-secondary)"
+              }}
+            >
+              Registrar
+            </button>
+          </div>
         </form>
       </div>
     </div>
