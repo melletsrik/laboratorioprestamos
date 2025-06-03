@@ -1,5 +1,5 @@
-Drop database if exists Prueba;
-create database Prueba;
+Drop database if exists sistema_prestamos_electronica;
+create database sistema_prestamos_electronica;
 use Prueba;
 drop table if exists Detalle_Prestamo;
 drop table if exists Prestamo;
