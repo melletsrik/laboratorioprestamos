@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import logo from "../assets/logo.png";
-import Button from "../components/Button";
+import Button from "../components/Button"; // Asegúrate que Button tenga diseño acorde
 
 export default function RegistrarUsuario() {
   const [p_nRegistro, setRegistro] = useState("");
