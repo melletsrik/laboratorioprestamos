@@ -17,8 +17,6 @@ export default function Login() {
         contrasena,
       });
 
-      console.log("slkdavao")
-
       if (respuesta.data.token) {
         localStorage.setItem("token", respuesta.data.token);
         navegar("/registrar-prestamo");

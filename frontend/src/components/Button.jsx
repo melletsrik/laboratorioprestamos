@@ -3,7 +3,7 @@ export default function Button({ children, className = "", ...props }) {
     <button
       className={`
         w-full px-6 py-3 
-        bg-[var(--color-primary)] 
+        bg-[var(--color-secondary)] 
         hover:bg-red-700 
         text-[var(--color-white)] 
         font-semibold 
