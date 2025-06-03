@@ -2,7 +2,8 @@
 
 @theme {
   --color-primary: #CF152D;
-  --color-secondary: #afb1b3;
+  --color-secondary: #A3A3A3;
+  --color-terciary: #BBBBBB ;
   --color-black: #000000;
   --color-white: #ffffff;
 }
