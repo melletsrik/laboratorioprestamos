@@ -9,6 +9,9 @@ const loginRouter = require("./routes/login"); //importar el router de login
 const prestamosRouter = require("./routes/prestamos"); // Asegúrate de importar el router de ventanaPrestamo
 const usuariosRouter = require("./routes/usuarios");
 
+const personasRouter = require("./routes/personas");
+const docentesRouter = require("./routes/docentes");
+
 //CONFIGURACION INICIAL
 const app = express();
 const PORT = process.env.SERVER_PORT || 4000;
@@ -24,7 +27,11 @@ app.use(express.json()); //debe estar antes de rutas, para que pueda leer el bod
 /// RUTAS
 app.use("/login", loginRouter);
 app.use("/prestamos", prestamosRouter);
-app.use("/usuarios", usuariosRouter);
+
+app.use("/usuarios", usuariosRouter)
+app.use("/personas", personasRouter);
+
+app.use("/docentes", docentesRouter);
 
 // LEVANTAR SERVIDOR
 app.listen(PORT, () => {
