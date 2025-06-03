@@ -11,6 +11,7 @@ const usuariosRouter = require("./routes/usuarios");
 
 const personasRouter = require("./routes/personas");
 const docentesRouter = require("./routes/docentes");
+const estudiantesRouter = require("./routes/estudiantes");
 
 //CONFIGURACION INICIAL
 const app = express();
@@ -32,6 +33,7 @@ app.use("/usuarios", usuariosRouter)
 app.use("/personas", personasRouter);
 
 app.use("/docentes", docentesRouter);
+app.use("/estudiantes", estudiantesRouter);
 
 // LEVANTAR SERVIDOR
 app.listen(PORT, () => {
