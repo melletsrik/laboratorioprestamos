@@ -36,7 +36,7 @@ router.post("/registrar-usuario", async (req, res) => {
 
     // Insertar usuario
     const [result] = await pool.execute(
-      "INSERT INTO Usuario (id_persona, nombre_usuario, password_, rol) VALUES (?, ?, ?, ?)",
+
       [id_persona, nombre_usuario, passwordHash, rol]
     );
 

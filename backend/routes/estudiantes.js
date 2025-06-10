@@ -35,5 +35,4 @@ router.post("/registrar-estudiante", async (req, res) => {
     res.status(500).json({ mensaje: "Error interno al registrar estudiante" });
   }
 });
-
 module.exports = router;

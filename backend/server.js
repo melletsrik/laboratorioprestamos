@@ -7,6 +7,8 @@ const cors = require("cors");
 //RUTAS
 const loginRouter = require("./routes/login"); //importar el router de login
 const prestamosRouter = require("./routes/prestamos"); // Asegúrate de importar el router de ventanaPrestamo
+const listadoPrestamoRouter = require("./routes/listadoPrestamo");
+
 const usuariosRouter = require("./routes/usuarios");
 
 const personasRouter = require("./routes/personas");
@@ -28,6 +30,7 @@ app.use(express.json()); //debe estar antes de rutas, para que pueda leer el bod
 /// RUTAS
 app.use("/login", loginRouter);
 app.use("/prestamos", prestamosRouter);
+app.use("/listadoPrestamo", listadoPrestamoRouter);
 
 app.use("/usuarios", usuariosRouter)
 app.use("/personas", personasRouter);

@@ -30,4 +30,27 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.post("/", async (req, res) => {
+  try {
+    const {
+      id_estudiante,
+      id_docente,
+      id_auxiliar_entrega,
+      id_materia,
+      id_estado //  el id_estado correspondiente a Prestado
+    } = req.body;
+
+    const [result] = await pool.execute(
+      `INSERT INTO Prestamo (id_estudiante, id_docente, id_auxiliar_entrega, id_materia, id_estado)
+       VALUES (?, ?, ?, ?, ?)`,
+      [id_estudiante, id_docente, id_auxiliar_entrega, id_materia, id_estado]
+    );
+
+    res.status(201).json({ mensaje: "Préstamo registrado", id_prestamo: result.insertId });
+  } catch (error) {
+    console.error("Error al registrar préstamo:", error);
+    res.status(500).json({ mensaje: "Error interno del servidor" });
+  }
+});
+
 module.exports = router;
