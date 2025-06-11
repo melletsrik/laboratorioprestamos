@@ -1,52 +1,34 @@
 const MaterialService = require("../services/material.service");
 
 exports.getAll = async (req, res) => {
-  const result = await MaterialService.getAll();
-
-  if (!result.success) {
-    return res.status(400).json({
+  try {
+    const result = await MaterialService.getAll();
+    res.json({
+      success: true,
+      data: result.data
+    });
+  } catch (error) {
+    res.status(500).json({
       success: false,
-      message: result.message,
-      error: result.error,
+      error: error.message
     });
   }
-
-  res.status(200).json({
-    success: true,
-    data: result.data,
-    message: result.message,
-  });
 };
 
 exports.create = async (req, res) => {
-  // Validación básica de campos requeridos
-  if (
-    !req.body.codigo_material ||
-    !req.body.nombre ||
-    !req.body.cantidad_total
-  ) {
-    return res.status(400).json({
+  try {
+    // El middleware ya validó que el usuario tiene rol adecuado
+    const result = await MaterialService.create(req.body);
+    res.status(201).json({
+      success: true,
+      data: result.data
+    });
+  } catch (error) {
+    res.status(400).json({
       success: false,
-      message:
-        "Faltan campos obligatorios: codigo_material, nombre, cantidad_total",
+      error: error.message
     });
   }
-
-  const result = await MaterialService.create(req.body);
-
-  if (!result.success) {
-    return res.status(400).json({
-      success: false,
-      message: result.message,
-      error: result.error || "Error desconocido",
-    });
-  }
-
-  res.status(201).json({
-    success: true,
-    data: result.data,
-    message: result.message,
-  });
 };
 
 exports.getById = async (req, res, next) => {
