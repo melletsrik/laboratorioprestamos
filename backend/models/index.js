@@ -1,24 +1,13 @@
 const { Sequelize, DataTypes } = require('sequelize'); // Añadir DataTypes aquí
 const config = require('../config/database');
 
-// 1. Configurar conexión a la base de datos
-const sequelize = new Sequelize(
-  config.development.database,
-  config.development.username,
-  config.development.password,
-  {
-    host: config.development.host,
-    dialect: config.development.dialect,
-  }
-);
+const sequelize = new Sequelize(config);
 
-// 2. Importar modelos
-const Material = require('./material.model')(sequelize, DataTypes); // Pasar DataTypes
+const Material = require('./material.model')(sequelize, DataTypes);
 
-// 3. Sincronizar modelos
-sequelize.sync({ alter: true })
-  .then(() => console.log('✅ Modelos sincronizados con la base de datos'))
-  .catch(err => console.error('❌ Error al sincronizar modelos:', err));
+sequelize.sync({ alter: true, logging: false })
+  .then(() => console.log('✅ Modelos sincronizados'))
+  .catch(err => console.error('❌ Error de sincronización:', err.message));
 
 module.exports = {
   sequelize,
