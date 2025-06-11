@@ -3,28 +3,41 @@ const router = express.Router();
 const materialController = require('../controllers/material.controller');
 const roleMiddleware = require('../middlewares/role.middleware');
 
-// Rutas del material
-router.get('/', materialController.getAll);
-router.get('/:id', materialController.getById);
-router.get('/buscar/nombre', materialController.getByName);
-router.post('/', materialController.create);
-router.put('/:id', materialController.update);
-router.delete('/:id', materialController.delete);
-router.get('/codigo/:codigo', materialController.getByCode);
+// Rutas de consulta (para ambos roles)
+router.get('/', 
+  roleMiddleware(['listar_materiales']),
+  materialController.getAll
+);
 
+router.get('/:id', 
+  roleMiddleware(['listar_materiales']),
+  materialController.getById
+);
+
+router.get('/buscar/nombre', 
+  roleMiddleware(['listar_materiales']),
+  materialController.getByName
+);
+
+router.get('/codigo/:codigo', 
+  roleMiddleware(['listar_materiales']),
+  materialController.getByCode
+);
+
+// Rutas de SOLO ADMIN
 router.post('/', 
-  roleMiddleware(['Administrativo', 'Auxiliar']),
+  roleMiddleware(['registrar_materiales']),
   materialController.create
 );
+
 router.put('/:id', 
-  roleMiddleware(['Administrativo', 'Auxiliar']),
+  roleMiddleware(['modificar_materiales']),
   materialController.update
 );
+
 router.delete('/:id', 
-  roleMiddleware(['Administrativo']),
+  roleMiddleware(['eliminar_materiales']),
   materialController.delete
 );
-
-
 
 module.exports = router;
