@@ -22,7 +22,7 @@ export default function Login() {
       );
       if (respuesta.data.token) {
         localStorage.setItem("token", respuesta.data.token);
-        navegar("/registrar-prestamo");
+        navegar("/listado-prestamos");
       }
     } catch (err) {
       setError("Usuario o contraseña incorrectos");
