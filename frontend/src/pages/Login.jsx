@@ -24,8 +24,9 @@ export default function Login() {
         localStorage.setItem("token", respuesta.data.token);
         navegar("/listado-prestamos");
       }
-    } catch (err) {
+    } catch (error) {
       setError("Usuario o contraseña incorrectos");
+      console.log(error)
     }
   };
 

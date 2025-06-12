@@ -10,7 +10,6 @@ module.exports = (sequelize, DataTypes) => {
       id_persona: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        unique: true,
       },
       Registro: {
         type: DataTypes.STRING(25),
@@ -28,6 +27,10 @@ module.exports = (sequelize, DataTypes) => {
     Estudiante.belongsTo(models.Persona, {
       foreignKey: "id_persona",
       as: "persona",
+    });
+    Estudiante.hasMany(models.Estudiante_Materia, {
+      foreignKey: "id_estudiante",
+      as: "materias",
     });
   };
 

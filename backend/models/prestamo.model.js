@@ -40,7 +40,23 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Prestamo.associate = function (models) {
-    Prestamo.hasMany(models.DetallePrestamo, {
+    Prestamo.belongsTo(models.Estudiante_Materia, {
+      foreignKey: "id_estudiantes_materia",
+      as: "estudiante_materia",
+    });
+    Prestamo.belongsTo(models.Usuario, {
+      foreignKey: "id_usuario_entrega",
+      as: "usuario_entrega",
+    });
+    Prestamo.belongsTo(models.Usuario, {
+      foreignKey: "id_usuario_recibe",
+      as: "usuario_recibe",
+    });
+    Prestamo.belongsTo(models.Estado_Prestamo, {
+      foreignKey: "id_estado",
+      as: "estado",
+    });
+    Prestamo.hasMany(models.Detalle_Prestamo, {
       foreignKey: "id_prestamo",
       as: "detalles",
     });
