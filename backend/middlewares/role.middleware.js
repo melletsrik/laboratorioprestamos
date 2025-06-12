@@ -8,12 +8,12 @@ module.exports = (requiredPermissions) => {
         'Administrativo': [
           'registrar_prestamos', 'registrar_estudiantes', 'registrar_auxiliares',
           'registrar_devoluciones', 'registrar_docentes', 'registrar_materiales',
-          'registrar_materias', 'listar_materiales', 'listar_prestamos'
+          'registrar_materias', 'listar_materiales', 'listar_prestamos', 'listar_docentes'
         ],
         'Auxiliar': [
-        //   'registrar_prestamos', 'registrar_devoluciones', 'registrar_docentes',
-        //   'registrar_materias', 
-          'listar_materiales', 'listar_prestamos'
+           'registrar_prestamos', 'registrar_devoluciones', 'registrar_docentes', 
+           'registrar_materias', 
+          'listar_materiales', 'listar_prestamos', 'listar_docentes'
         ]
       };
 

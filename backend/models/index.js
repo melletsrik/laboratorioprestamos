@@ -29,7 +29,7 @@ Object.keys(db).forEach(modelName => {
 });
 
 // Sincronizar modelos con la base de datos
-sequelize.sync({ alter: true, logging: console.log })
+sequelize.sync({ alter: true })
   .then(() => console.log('✅ Modelos sincronizados'))
   .catch(err => console.error('❌ Error de sincronización:', err));
 
