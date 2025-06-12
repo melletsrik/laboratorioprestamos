@@ -97,12 +97,3 @@ exports.update = async (req, res, next) => {
     next(error);
   }
 };
-
-exports.delete = async (req, res, next) => {
-  try {
-    await MaterialService.delete(req.params.id);
-    res.status(204).end();
-  } catch (error) {
-    next(error);
-  }
-};

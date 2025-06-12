@@ -146,27 +146,6 @@ class MaterialService {
       };
     }
   }
-
-  static async delete(id) {
-    try {
-      const material = await Material.findByPk(id);
-      if (!material) {
-        throw new Error("Material no encontrado");
-      }
-      await material.destroy();
-      return {
-        success: true,
-        message: "Material eliminado exitosamente",
-      };
-    } catch (error) {
-      console.error("Error en MaterialService.delete:", error);
-      return {
-        success: false,
-        error: error.message,
-        message: "Error al eliminar el material",
-      };
-    }
-  }
 }
 
 module.exports = MaterialService;

@@ -10,6 +10,12 @@ const db = {
   Persona: require('./persona.model')(sequelize, DataTypes),
   Estudiante: require('./estudiante.model')(sequelize, DataTypes),
   Docente: require('./docente.model')(sequelize, DataTypes),
+  //Facultad: require('./facultad.model')(sequelize, DataTypes),
+  //Carrera: require('./carrera.model')(sequelize, DataTypes),
+  //Materia: require('./materia.model')(sequelize, DataTypes),
+  //DocenteMateria: require('./docente_materia.model')(sequelize, DataTypes),
+  //EstudianteMateria: require('./estudiante_materia.model')(sequelize, DataTypes),
+  //EstadoPrestamo: require('./estado_prestamo.model')(sequelize, DataTypes),
   Material: require('./material.model')(sequelize, DataTypes),
   Prestamo: require('./prestamo.model')(sequelize, DataTypes),
   DetallePrestamo: require('./detalle_prestamo.model')(sequelize, DataTypes)

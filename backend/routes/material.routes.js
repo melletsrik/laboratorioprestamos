@@ -35,9 +35,5 @@ router.put('/:id',
   materialController.update
 );
 
-router.delete('/:id', 
-  roleMiddleware(['eliminar_materiales']),
-  materialController.delete
-);
 
 module.exports = router;
