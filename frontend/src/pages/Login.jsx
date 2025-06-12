@@ -12,11 +12,14 @@ export default function Login() {
   const iniciarSesion = async (e) => {
     e.preventDefault();
     try {
-      const respuesta = await axios.post("http://localhost:4000/login", {
-        nombre_usuario: nombreUsuario,
-        contrasena,
-      });
-
+      const respuesta = await axios.post(
+        "http://localhost:4000/api/auth/login",
+        {
+          nombreUsuario,
+          password: contrasena,
+        },
+        { headers: { "Content-Type": "application/json" } }
+      );
       if (respuesta.data.token) {
         localStorage.setItem("token", respuesta.data.token);
         navegar("/registrar-prestamo");
@@ -28,7 +31,10 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen">
-      <div className="w-1/2 text-white flex items-center justify-center" style={{ backgroundColor: "var(--color-primary)" }}>
+      <div
+        className="w-1/2 text-white flex items-center justify-center"
+        style={{ backgroundColor: "var(--color-primary)" }}
+      >
         <div className="text-center space-y-2">
           <p className="font-bold text-lg">LABORATORIO DE ELECTRONICA</p>
         </div>
@@ -43,7 +49,9 @@ export default function Login() {
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
           <div>
-            <label className="text-sm font-semibold text-gray-800">USUARIO</label>
+            <label className="text-sm font-semibold text-gray-800">
+              USUARIO
+            </label>
             <input
               type="text"
               value={nombreUsuario}
@@ -55,7 +63,9 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="text-sm font-semibold text-gray-800">CONTRASEÑA</label>
+            <label className="text-sm font-semibold text-gray-800">
+              CONTRASEÑA
+            </label>
             <input
               type="password"
               value={contrasena}
