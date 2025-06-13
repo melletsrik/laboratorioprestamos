@@ -9,18 +9,13 @@ router.get('/',
   materialController.getAll
 );
 
-router.get('/:id', 
-  roleMiddleware(['listar_materiales']),
-  materialController.getById
-);
-
 router.get('/buscar/nombre', 
-  roleMiddleware(['listar_materiales']),
+  roleMiddleware(['buscar_materiales']),
   materialController.getByName
 );
 
-router.get('/codigo/:codigo', 
-  roleMiddleware(['listar_materiales']),
+router.get('/buscar/:codigo', 
+  roleMiddleware(['buscar_material']),
   materialController.getByCode
 );
 

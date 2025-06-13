@@ -5,12 +5,12 @@ exports.getAll = async (req, res) => {
     const result = await MaterialService.getAll();
     res.json({
       success: true,
-      data: result.data
+      data: result.data,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -21,35 +21,27 @@ exports.create = async (req, res) => {
     const result = await MaterialService.create(req.body);
     res.status(201).json({
       success: true,
-      data: result.data
+      data: result.data,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
-  }
-};
-
-exports.getById = async (req, res, next) => {
-  try {
-    const material = await MaterialService.getById(req.params.id);
-    if (!material) {
-      return res.status(404).json({ message: "Material no encontrado" });
-    }
-    res.json(material);
-  } catch (error) {
-    next(error);
   }
 };
 
 exports.getByCode = async (req, res, next) => {
   try {
-    const material = await MaterialService.getByCode(req.params.codigo);
-    if (!material) {
-      return res.status(404).json({ message: "Material no encontrado" });
+    const result = await MaterialService.getByCode(req.params.codigo);
+    if (!result.success) {
+      return res.status(404).json({
+        success: false,
+        message: result.message || "Material no encontrado",
+        error: result.error,
+      });
     }
-    res.json(material);
+    res.json(result);
   } catch (error) {
     next(error);
   }

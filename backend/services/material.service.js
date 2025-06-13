@@ -50,34 +50,17 @@ class MaterialService {
     }
   }
 
-  static async getById(id) {
-    try {
-      const material = await Material.findByPk(id);
-      if (!material) {
-        throw new Error("Material no encontrado");
-      }
-      return {
-        success: true,
-        data: material,
-        message: "Material encontrado exitosamente",
-      };
-    } catch (error) {
-      console.error("Error en MaterialService.getById:", error);
-      return {
-        success: false,
-        error: error.message,
-        message: "Error al buscar el material",
-      };
-    }
-  }
-
   static async getByCode(codigo) {
     try {
       const material = await Material.findOne({
         where: { codigo_material: codigo },
       });
       if (!material) {
-        throw new Error("Material no encontrado");
+        return {
+          success: false,
+          message: "Material no encontrado",
+          error: "Material no encontrado",
+        };
       }
       return {
         success: true,
@@ -125,19 +108,46 @@ class MaterialService {
     }
   }
 
-  static async update(id, materialData) {
+  static async update(codigo, materialData) {
+    const transaction = await sequelize.transaction();
     try {
-      const material = await Material.findByPk(id);
+      // Buscar por código en lugar de ID
+      const material = await Material.findOne({
+        where: { codigo_material: codigo },
+        transaction,
+      });
+
       if (!material) {
         throw new Error("Material no encontrado");
       }
-      const updatedMaterial = await material.update(materialData);
+
+      // Verificar si se está cambiando el código y si ya existe
+      if (
+        materialData.codigo_material &&
+        materialData.codigo_material !== codigo
+      ) {
+        const existeCodigo = await Material.findOne({
+          where: { codigo_material: materialData.codigo_material },
+          transaction,
+        });
+
+        if (existeCodigo) {
+          throw new Error("El nuevo código de material ya está en uso");
+        }
+      }
+
+      const updatedMaterial = await material.update(materialData, {
+        transaction,
+      });
+      await transaction.commit();
+
       return {
         success: true,
         data: updatedMaterial,
         message: "Material actualizado exitosamente",
       };
     } catch (error) {
+      await transaction.rollback();
       console.error("Error en MaterialService.update:", error);
       return {
         success: false,
