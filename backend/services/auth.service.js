@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Usuario, Rol } = require('../models');
+const { ROLES, ROLE_PERMISSIONS } = require('../constants/permissions');
 
 class AuthService {
   static async login(nombreUsuario, password) {
@@ -22,12 +23,18 @@ class AuthService {
         throw new Error('Contraseña incorrecta');
       }
 
+      // Verificar que el rol sea válido
+      if (!Object.values(ROLES).includes(usuario.rol.descripcion)) {
+        throw new Error('Rol de usuario no válido');
+      }
+
       const token = jwt.sign(
         { 
-          id: usuario.id_usuario, 
-          rol: usuario.rol.descripcion, // Accede a través del alias
+          id: usuario.id_usuario,
+          rol: usuario.rol.descripcion,
           nombre: usuario.nombre,
-          apellido: usuario.apellido
+          apellido: usuario.apellido,
+          permissions: ROLE_PERMISSIONS[usuario.rol.descripcion] || []
         },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
@@ -40,7 +47,8 @@ class AuthService {
           id: usuario.id_usuario,
           nombre: usuario.nombre,
           apellido: usuario.apellido,
-          rol: usuario.rol.descripcion
+          rol: usuario.rol.descripcion,
+          permissions: ROLE_PERMISSIONS[usuario.rol.descripcion] || []
         }
       };
     } catch (error) {

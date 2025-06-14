@@ -20,22 +20,18 @@ app.get('/api/public', (req, res) => {
   res.json({ message: 'Ruta pública accesible' });
 });
 
+// Importa las rutas
+const authRoutes = require('./routes/auth.routes');
+const protectedRoutes = require('./routes'); // Importa routes/index.js
+
 // Rutas públicas (login)
-app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/auth', authRoutes);
 
-// Middleware de autenticación para todas las rutas /api/*
-app.use('/api', authMiddleware);
+// Middleware de autenticación para rutas API
+app.use('/api', authMiddleware); // Aplica primero el middleware
 
-// Rutas protegidas
-app.use('/api', require('./routes'));
-
-// Ruta protegida de prueba
-app.get('/api/protected', (req, res) => {
-  res.json({ 
-    message: 'Ruta protegida accesible',
-    user: req.user 
-  });
-});
+// Monta todas las rutas protegidas
+app.use('/api', protectedRoutes); // Luego las rutas protegidas
 
 // Manejo de errores
 app.use((err, req, res, next) => {

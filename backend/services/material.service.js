@@ -8,14 +8,13 @@ class MaterialService {
       return {
         success: true,
         data: materiales,
-        message: "Materiales obtenidos exitosamente",
+        message: "Materiales obtenidos correctamente"
       };
     } catch (error) {
       console.error("Error en MaterialService.getAll:", error);
       return {
         success: false,
-        error: error.message,
-        message: "Error al obtener los materiales",
+        message: "Error al obtener materiales"
       };
     }
   }
@@ -23,29 +22,34 @@ class MaterialService {
   static async create(materialData) {
     try {
       if (!materialData.codigo_material || !materialData.nombre) {
-        throw new Error("Código y nombre son campos obligatorios");
+        return {
+          success: false,
+          message: "Código y nombre son requeridos"
+        };
       }
 
       const existe = await Material.findOne({
-        where: { codigo_material: materialData.codigo_material },
+        where: { codigo_material: materialData.codigo_material }
       });
 
       if (existe) {
-        throw new Error("El código de material ya existe");
+        return {
+          success: false,
+          message: "El material ya existe"
+        };
       }
 
       const material = await Material.create(materialData);
       return {
         success: true,
         data: material,
-        message: "Material creado exitosamente",
+        message: "Material creado correctamente"
       };
     } catch (error) {
       console.error("Error en MaterialService.create:", error);
       return {
         success: false,
-        error: error.message,
-        message: "Error al crear el material",
+        message: "Error al crear material"
       };
     }
   }
@@ -53,26 +57,26 @@ class MaterialService {
   static async getByCode(codigo) {
     try {
       const material = await Material.findOne({
-        where: { codigo_material: codigo },
+        where: { codigo_material: codigo }
       });
+      
       if (!material) {
         return {
           success: false,
-          message: "Material no encontrado",
-          error: "Material no encontrado",
+          message: "Material no encontrado"
         };
       }
+      
       return {
         success: true,
         data: material,
-        message: "Material encontrado exitosamente",
+        message: "Material encontrado"
       };
     } catch (error) {
       console.error("Error en MaterialService.getByCode:", error);
       return {
         success: false,
-        error: error.message,
-        message: "Error al buscar el material",
+        message: "Error al buscar material"
       };
     }
   }
@@ -82,28 +86,28 @@ class MaterialService {
       const materiales = await Material.findAll({
         where: {
           nombre: {
-            [Op.like]: `%${nombreBuscado}%`,
-          },
-        },
+            [Op.like]: `%${nombreBuscado}%`
+          }
+        }
       });
 
       if (materiales.length === 0) {
         return {
           success: false,
-          message: "No se encontraron materiales con ese nombre",
+          message: "No se encontraron materiales"
         };
       }
+      
       return {
         success: true,
         data: materiales,
-        message: "Búsqueda exitosa",
+        message: "Búsqueda completada"
       };
     } catch (error) {
       console.error("Error en MaterialService.getByName:", error);
       return {
         success: false,
-        error: error.message,
-        message: "Error al buscar materiales",
+        message: "Error al buscar materiales"
       };
     }
   }
@@ -111,48 +115,46 @@ class MaterialService {
   static async update(codigo, materialData) {
     const transaction = await sequelize.transaction();
     try {
-      // Buscar por código en lugar de ID
       const material = await Material.findOne({
         where: { codigo_material: codigo },
-        transaction,
+        transaction
       });
 
       if (!material) {
-        throw new Error("Material no encontrado");
+        return {
+          success: false,
+          message: "Material no encontrado"
+        };
       }
 
-      // Verificar si se está cambiando el código y si ya existe
-      if (
-        materialData.codigo_material &&
-        materialData.codigo_material !== codigo
-      ) {
+      if (materialData.codigo_material && materialData.codigo_material !== codigo) {
         const existeCodigo = await Material.findOne({
           where: { codigo_material: materialData.codigo_material },
-          transaction,
+          transaction
         });
 
         if (existeCodigo) {
-          throw new Error("El nuevo código de material ya está en uso");
+          return {
+            success: false,
+            message: "El código ya está en uso"
+          };
         }
       }
 
-      const updatedMaterial = await material.update(materialData, {
-        transaction,
-      });
+      const updatedMaterial = await material.update(materialData, { transaction });
       await transaction.commit();
 
       return {
         success: true,
         data: updatedMaterial,
-        message: "Material actualizado exitosamente",
+        message: "Material actualizado"
       };
     } catch (error) {
       await transaction.rollback();
       console.error("Error en MaterialService.update:", error);
       return {
         success: false,
-        error: error.message,
-        message: "Error al actualizar el material",
+        message: "Error al actualizar material"
       };
     }
   }

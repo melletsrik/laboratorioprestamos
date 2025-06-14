@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken');
-const { Rol, Usuario } = require('../models');
+const { Usuario, Rol } = require('../models');
+const { ROLES, PERMISSIONS, ROLE_PERMISSIONS } = require('../constants/permissions');
 
 module.exports = async (req, res, next) => {
   try {
-    // 1. Verificar si el token existe
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
@@ -13,11 +13,8 @@ module.exports = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    
-    // 2. Verificar y decodificar el token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // 3. Verificar si el usuario aún existe en la base de datos
     const usuario = await Usuario.findByPk(decoded.id, {
       include: [{
         model: Rol,
@@ -33,12 +30,21 @@ module.exports = async (req, res, next) => {
       });
     }
 
-    // 4. Adjuntar información del usuario al request
+    // Verificar que el rol sea válido
+    if (!Object.values(ROLES).includes(usuario.rol.descripcion)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Rol de usuario no válido'
+      });
+    }
+
+    // Adjuntar usuario y permisos al request
     req.user = {
       id: usuario.id_usuario,
       nombre: usuario.nombre,
       apellido: usuario.apellido,
-      rol: usuario.rol.descripcion
+      rol: usuario.rol.descripcion,
+      permissions: ROLE_PERMISSIONS[usuario.rol.descripcion] || []
     };
 
     next();
