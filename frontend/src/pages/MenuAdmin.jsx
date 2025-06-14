@@ -1,6 +1,13 @@
 import Button from "../components/Button";
-
+import { useNavigate } from "react-router-dom";
 export default function MenuAdmin() {
+
+  const navegar=useNavigate();
+
+  const handleVerStock = () => {
+    navegar("/material");
+  }
+
   return (
     <div className="flex flex-col text-white">
       <header
@@ -14,7 +21,7 @@ export default function MenuAdmin() {
         <div className="grid grid-cols-3 grid-rows-3 gap-14 p-10">
           <Button>Registrar Prestamo</Button>
           <Button>Registrar Devolucion</Button>
-          <Button>Ver Stock Materiales</Button>
+          <Button onClick={handleVerStock}>Ver Stock Materiales</Button>
           <Button>Registrar Estudiante</Button>
           <Button>Registrar Docente</Button>
           <Button>Agregar Materia</Button>

@@ -20,13 +20,27 @@ export default function Login() {
         },
         { headers: { "Content-Type": "application/json" } }
       );
-      if (respuesta.data.token) {
+
+      if (respuesta.data.token && respuesta.data.usuario) {
+        // Guardar token y datos de usuario
         localStorage.setItem("token", respuesta.data.token);
-        navegar("/listado-prestamos");
+        localStorage.setItem("user", JSON.stringify(respuesta.data.usuario));
+
+        // Redirigir según el rol
+        if (respuesta.data.usuario.rol === "Administrativo") {
+          navegar("/menu-admin");
+        } else if (respuesta.data.usuario.rol === "Auxiliar") {
+          navegar("/menu-aux");
+        } else {
+          // Rol no reconocido
+          setError("No tienes permisos para acceder al sistema");
+          localStorage.clear();
+        }
       }
     } catch (error) {
       setError("Usuario o contraseña incorrectos");
-      console.log(error)
+      console.error("Error en login:", error);
+      localStorage.clear();
     }
   };
 

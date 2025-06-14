@@ -1,19 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+
 export default function Modal({isOpen, onClose, onAgregarMaterial}) {
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
   const [cantidad, setCantidad] = useState("");
-  if(!isOpen) return null;
+  const inputRef = useRef(null);
+
+  // useEffect para enfocar automáticamente el input de código cuando se abra el modal
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  // Manejar la entrada del lector de código de barras
+  const handleCodigo = (e) => {
+    // Si es Enter (código de barras terminado) o el input ya tiene el código completo
+    if (e.key === 'Enter' || e.target.value.length >= 13) { // 13 es el típico largo de un código EAN-13
+      e.preventDefault();
+      // Aquí podrías hacer una búsqueda automática del nombre si tienes una API para eso
+      // Por ahora, solo guardamos el código
+      setCodigo(e.target.value);
+      // Enfocar el input del nombre
+      document.getElementById('nombreInput')?.focus();
+    }
+  };
+
   const agregar = (e) => {
     e.preventDefault();
-    if (!codigo || !nombre || !cantidad) return;
-    onAgregarMaterial({ codigo, nombre, cantidad: parseInt(cantidad) });
-    // Limpiar los campos después de agregar
+    
+    // Validar campos
+    if (!codigo || !nombre) {
+      alert('Por favor, ingrese código y nombre');
+      return;
+    }
+
+    // Validar cantidad
+    const cantidadNum = parseInt(cantidad);
+    if (isNaN(cantidadNum) || cantidadNum <= 0) {
+      alert('Por favor, ingrese una cantidad válida (número mayor a 0)');
+      return;
+    }
+
+    // Enviar datos al backend
+    onAgregarMaterial({ 
+      codigo_material: codigo,
+      nombre,
+      cantidad: cantidadNum
+    });
+
+    // Limpiar campos y cerrar modal
     setCodigo("");
     setNombre("");
     setCantidad("");
+    onClose();
   };
 
+  if(!isOpen) return null;
 
   return(
     //fondo oscuro fuera del modal, inset oculta todo el contenido de la pantalla
