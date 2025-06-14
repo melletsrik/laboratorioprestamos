@@ -1,25 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const docenteController = require('../controllers/docente.controller');
-const roleMiddleware = require('../middlewares/role.middleware');
+const permissionMiddleware = require('../middlewares/permission.middleware');
+const { PERMISSIONS } = require('../constants/permissions');
 
 router.get('/', 
-  roleMiddleware(['listar_docentes']),
+  permissionMiddleware([PERMISSIONS.DOCENTE_LISTAR]),
   docenteController.getAll
 );
 
 router.get('/buscar/docente', 
-  roleMiddleware(['listar_docentes']),
+  permissionMiddleware([PERMISSIONS.DOCENTE_LISTAR]),
   docenteController.getByName
 );
 
 router.post('/', 
-  roleMiddleware(['registrar_docentes']),
+  permissionMiddleware([PERMISSIONS.DOCENTE_REGISTRAR]),
   docenteController.create
 );
 
 router.put('/:id',
-  roleMiddleware(['editar_docentes']),
+  permissionMiddleware([PERMISSIONS.DOCENTE_EDITAR]),
   docenteController.update
 );
 

@@ -7,19 +7,19 @@ class DocenteService {
       const docentes = await Docente.findAll({
         include: {
           model: Persona,
-          as: 'persona'
+          as: 'persona',
+          attributes: ['nombre', 'apellido']
         }
       });
       return {
         success: true,
         data: docentes,
-        message: "Docentes obtenidos exitosamente"
+        message: "Lista de docentes obtenida"
       };
     } catch (error) {
       console.error("Error en DocenteService.getAll:", error);
       return {
         success: false,
-        error: error.message,
         message: "Error al obtener docentes"
       };
     }
@@ -29,7 +29,10 @@ class DocenteService {
     const transaction = await sequelize.transaction();
     try {
       if (!dataDocente.nombre || !dataDocente.apellido) {
-        throw new Error("Nombre y apellido son obligatorios");
+        return {
+          success: false,
+          message: "Nombre y apellido son requeridos"
+        };
       }
 
       const persona = await Persona.create({
@@ -44,16 +47,15 @@ class DocenteService {
       await transaction.commit();
       return {
         success: true,
-        data: { ...docente.toJSON(), persona: persona.toJSON() },
-        message: "Docente creado exitosamente"
+        data: { ...docente.toJSON(), persona },
+        message: "Docente registrado correctamente"
       };
     } catch (error) {
       await transaction.rollback();
       console.error("Error en DocenteService.create:", error);
       return {
         success: false,
-        error: error.message,
-        message: "Error al crear docente"
+        message: "Error al registrar docente"
       };
     }
   }
@@ -69,27 +71,27 @@ class DocenteService {
               { nombre: { [Op.like]: `%${nombreDocenteBuscado}%` } },
               { apellido: { [Op.like]: `%${nombreDocenteBuscado}%` } }
             ]
-          }
+          },
+          attributes: ['nombre', 'apellido']
         }
       });
 
       if (docentes.length === 0) {
         return {
           success: false,
-          message: "No se encontraron docentes con ese nombre"
+          message: "No se encontraron docentes"
         };
       }
       
       return {
         success: true,
         data: docentes,
-        message: "Búsqueda exitosa"
+        message: "Búsqueda completada"
       };
     } catch (error) {
-      console.error("Error en DocenteService.searchByName:", error);
+      console.error("Error en DocenteService.getByName:", error);
       return {
         success: false,
-        error: error.message,
         message: "Error al buscar docentes"
       };
     }
@@ -106,10 +108,12 @@ class DocenteService {
       });
       
       if (!docente) {
-        throw new Error("Docente no encontrado");
+        return {
+          success: false,
+          message: "Docente no encontrado"
+        };
       }
 
-      // Actualizar datos de persona
       await docente.persona.update({
         nombre: dataDocente.nombre || docente.persona.nombre,
         apellido: dataDocente.apellido || docente.persona.apellido
@@ -119,14 +123,13 @@ class DocenteService {
       return {
         success: true,
         data: docente,
-        message: "Docente actualizado exitosamente"
+        message: "Docente actualizado"
       };
     } catch (error) {
       await transaction.rollback();
       console.error("Error en DocenteService.update:", error);
       return {
         success: false,
-        error: error.message,
         message: "Error al actualizar docente"
       };
     }

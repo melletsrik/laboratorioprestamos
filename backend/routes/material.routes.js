@@ -10,7 +10,7 @@ router.get('/',
   materialController.getAll
 );
 
-router.get('/buscar/nombre', 
+router.get('/buscar/material', 
   permissionMiddleware([PERMISSIONS.MATERIAL_BUSCAR]),
   materialController.getByName
 );
