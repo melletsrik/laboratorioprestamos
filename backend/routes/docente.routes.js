@@ -20,7 +20,7 @@ router.post('/',
 );
 
 router.put('/:id',
-  permissionMiddleware([PERMISSIONS.DOCENTE_EDITAR]),
+  permissionMiddleware([PERMISSIONS.DOCENTE_MODIFICAR]),
   docenteController.update
 );
 

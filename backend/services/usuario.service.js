@@ -1,46 +1,61 @@
-const bcrypt = require('bcrypt');
-const { Usuario, Rol, sequelize } = require('../models');
+const bcrypt = require("bcrypt");
+const { Usuario, Rol, sequelize } = require("../models");
 
 class UsuarioService {
   static async createAuxiliar(usuarioData) {
     const transaction = await sequelize.transaction();
     try {
       // Validación básica
-      if (!usuarioData.nombre || !usuarioData.apellido || 
-          !usuarioData.nombre_usuario || !usuarioData.password_) {
-        throw new Error('Nombre, apellido, nombre de usuario y contraseña son obligatorios');
+      if (
+        !usuarioData.nombre ||
+        !usuarioData.apellido ||
+        !usuarioData.nombre_usuario ||
+        !usuarioData.password_
+      ) {
+        return {
+          success: false,
+          message: "Datos incompletos",
+        };
       }
 
-      // Forzar rol Auxiliar (id_rol = 2)
-      usuarioData.id_rol = 2;
-
       // Verificar si el rol auxiliar existe
-      const rolAuxiliar = await Rol.findByPk(2);
+      const rolAuxiliar = await Rol.findOne({
+        where: { descripcion: "Auxiliar" },
+      });
       if (!rolAuxiliar) {
-        throw new Error('El rol Auxiliar no está configurado en el sistema');
+        return {
+          success: false,
+          message: "Rol no configurado",
+        };
       }
 
       // Verificar si el nombre de usuario ya existe
       const usuarioExistente = await Usuario.findOne({
-        where: { nombre_usuario: usuarioData.nombre_usuario }
+        where: { nombre_usuario: usuarioData.nombre_usuario },
       });
       if (usuarioExistente) {
-        throw new Error('El nombre de usuario ya está en uso');
+        return {
+          success: false,
+          message: "Usuario ya existe",
+        };
       }
 
       // Hash de la contraseña
       const hashedPassword = await bcrypt.hash(usuarioData.password_, 10);
 
-      const usuario = await Usuario.create({
-        nombre: usuarioData.nombre,
-        apellido: usuarioData.apellido,
-        nombre_usuario: usuarioData.nombre_usuario,
-        password_: hashedPassword,
-        id_rol: 2 // Siempre rol Auxiliar
-      }, { transaction });
+      const usuario = await Usuario.create(
+        {
+          nombre: usuarioData.nombre,
+          apellido: usuarioData.apellido,
+          nombre_usuario: usuarioData.nombre_usuario,
+          password_: hashedPassword,
+          id_rol: rolAuxiliar.id_rol,
+        },
+        { transaction }
+      );
 
       await transaction.commit();
-      
+
       // No devolver la contraseña
       const usuarioSinPassword = usuario.toJSON();
       delete usuarioSinPassword.password_;
@@ -48,46 +63,40 @@ class UsuarioService {
       return {
         success: true,
         data: usuarioSinPassword,
-        message: 'Auxiliar creado exitosamente'
+        message: "Auxiliar registrado",
       };
     } catch (error) {
       await transaction.rollback();
-      console.error('Error en UsuarioService.createAuxiliar:', error);
+      console.error("Error en UsuarioService.createAuxiliar:", error);
       return {
         success: false,
-        error: error.message,
-        message: 'Error al crear auxiliar'
+        message: "Error al registrar",
       };
     }
   }
 
-  static async getAuxiliarById(id) {
+  static async getAllAuxiliares() {
     try {
-      const auxiliar = await Usuario.findOne({
-        where: { id_usuario: id, id_rol: 2 },
+      const auxiliares = await Usuario.findAll({
         include: {
           model: Rol,
-          as: 'rol',
-          attributes: ['id_rol', 'descripcion']
+          as: "rol",
+          where: { descripcion: "Auxiliar" },
+          attributes: ["descripcion"],
         },
-        attributes: { exclude: ['password_'] }
+        attributes: { exclude: ["password_"] },
       });
-      
-      if (!auxiliar) {
-        throw new Error('Auxiliar no encontrado');
-      }
-      
+
       return {
         success: true,
-        data: auxiliar,
-        message: 'Auxiliar encontrado exitosamente'
+        data: auxiliares,
+        message: "Lista de auxiliares",
       };
     } catch (error) {
-      console.error('Error en UsuarioService.getAuxiliarById:', error);
+      console.error("Error en UsuarioService.getAllAuxiliares:", error);
       return {
         success: false,
-        error: error.message,
-        message: 'Error al buscar auxiliar'
+        message: "Error al obtener auxiliares",
       };
     }
   }

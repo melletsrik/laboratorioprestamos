@@ -5,7 +5,7 @@ const router = express.Router();
 const authRoutes = require('./auth.routes');
 const materialRoutes = require('./material.routes');
 const docenteRoutes = require('./docente.routes');
-// const auxiliarRoutes = require('./usuario.routes');
+const auxiliarRoutes = require('./usuario.routes'); //EN SI SON LAS RUTAS DE USUARIO
 // const estudianteRoutes = require('./estudiante.routes');
 
 // Rutas publicas
@@ -14,7 +14,7 @@ router.use('/auth', authRoutes);
 // Rutas protegidas (requieren autenticación)
 router.use('/materiales', materialRoutes);
 router.use('/docentes', docenteRoutes);
-// router.use('/auxiliares', auxiliarRoutes);
+ router.use('/auxiliares', auxiliarRoutes);
 // router.use('/estudiantes', estudianteRoutes);
 
 // Exporta el router

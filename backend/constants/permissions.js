@@ -13,33 +13,35 @@ module.exports = {
     
     // Estudiantes
     ESTUDIANTE_REGISTRAR: 'estudiante:registrar',
-    ESTUDIANTE_EDITAR: 'estudiante:editar',
+    ESTUDIANTE_MODIFICAR: 'estudiante:modificar',
     ESTUDIANTE_LISTAR: 'estudiante:listar',
     ESTUDIANTE_BUSCAR: 'estudiante:buscar',
     
     // Docentes
     DOCENTE_REGISTRAR: 'docente:registrar',
     DOCENTE_LISTAR: 'docente:listar',
+    DOCENTE_MODIFICAR: 'docente:modificar',
     
     // Préstamos
     PRESTAMO_REGISTRAR: 'prestamo:registrar',
     PRESTAMO_DEVOLUCION: 'prestamo:devolucion',
     
     // Auxiliares
-    AUXILIAR_REGISTRAR: 'auxiliar:registrar'
+    AUXILIAR_REGISTRAR: 'auxiliar:registrar',
+    AUXILIAR_LISTAR: 'auxiliar:listar'
   },
   
   ROLE_PERMISSIONS: {
     Administrativo: [
       'material:registrar', 'material:modificar', 'material:listar', 'material:buscar',
-      'estudiante:registrar', 'estudiante:editar', 'estudiante:listar', 'estudiante:buscar',
-      'docente:registrar', 'docente:listar',
+      'estudiante:registrar', 'estudiante:modificar', 'estudiante:listar', 'estudiante:buscar',
+      'docente:registrar', 'docente:listar', 'docente:modificar',
       'prestamo:registrar', 'prestamo:devolucion',
-      'auxiliar:registrar'
+      'auxiliar:registrar', 'auxiliar:listar',
     ],
     Auxiliar: [
       'material:listar', 'material:buscar',
-      'estudiante:registrar', 'estudiante:editar', 'estudiante:listar', 'estudiante:buscar',
+      'estudiante:registrar', 'estudiante:modificar', 'estudiante:listar', 'estudiante:buscar',
       'docente:registrar', 'docente:listar',
       'prestamo:registrar', 'prestamo:devolucion'
     ]

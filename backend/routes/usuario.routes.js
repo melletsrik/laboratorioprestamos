@@ -1,14 +1,18 @@
-// const express = require('express');
-// const router = express.Router();
-// const usuarioController = require('../controllers/usuario.controller');
-// const authMiddleware = require('../middlewares/auth.middleware');
-// const roleMiddleware = require('../middlewares/role.middleware');
+const express = require('express');
+const router = express.Router();
+const usuarioController = require('../controllers/usuario.controller');
+const permissionMiddleware = require('../middlewares/permission.middleware');
+const { PERMISSIONS } = require('../constants/permissions');
 
-// // Solo administrativos pueden gestionar auxiliares
-// router.use(authMiddleware);
-// router.use(roleMiddleware(['registrar_auxiliares']));
+// Rutas protegidas para administradores
+router.post('/',
+  permissionMiddleware([PERMISSIONS.AUXILIAR_REGISTRAR]),
+  usuarioController.createAuxiliar
+);
 
-// router.post('/', usuarioController.createAuxiliar);
-// router.get('/:id', usuarioController.getAuxiliarById);
+router.get('/',
+  permissionMiddleware([PERMISSIONS.AUXILIAR_LISTAR]),
+  usuarioController.getAllAuxiliares
+);
 
-// module.exports = router;
+module.exports = router;
