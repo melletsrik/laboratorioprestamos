@@ -12,7 +12,7 @@ export default function MenuAux() {
   const handleRegistrarPrestamo = () => {
     navegar("/registrar-prestamo");
   };
-
+ 
   
   return (
     <div className="flex flex-col text-white">

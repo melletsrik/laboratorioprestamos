@@ -1,96 +1,100 @@
-import { useState } from "react";
-import axios from "axios";
-import logo from "../assets/logo.png";
-import Button from "../components/Button";
+import React from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function RegistrarDocente() {
-  const [p_nRegistro, setRegistro] = useState("");
-  const [p_cNombre, setNombre] = useState("");
-  const [p_cApellido, setApellido] = useState("");
-  const [cMensaje, setMensaje] = useState("");
+function RegistrarDocente() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    nombre: '',
+    apellido: '',
+    correo: '',
+    departamento: '',
+    cedula: ''
+  });
 
-  const f_registrar = async (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      const res = await axios.post("http://localhost:4000/docentes/registrar-docente", {
-        p_nRegistro,
-        p_cNombre,
-        p_cApellido,
-      });
-      setMensaje(res.data.mensaje);
-      setRegistro("");
-      setNombre("");
-      setApellido("");
-    } catch (err) {
-      console.error(err);
-      setMensaje("Error al registrar docente");
-    }
+    // Here you would typically make an API call to save the docente
+    console.log('Submitting docente:', formData);
+    navigate('/menu-admin'); // Redirect to admin menu after submission
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center px-4">
-      <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-lg">
-        <div className="flex flex-col items-center mb-6">
-          <img src={logo} alt="Logo" className="h-20 mb-4" />
-          <h2 className="text-2xl font-semibold text-gray-800">
-            Registro de Persona
-          </h2>
+    <div className="container mt-5">
+      <h2>Registrar Docente</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label htmlFor="nombre" className="form-label">Nombre</label>
+          <input 
+            type="text" 
+            className="form-control" 
+            id="nombre" 
+            name="nombre"
+            value={formData.nombre}
+            onChange={handleChange}
+            required
+          />
         </div>
-
-        {cMensaje && (
-          <div
-            className={`text-sm text-center mb-4 font-medium ${
-              cMensaje.includes("correctamente")
-                ? "text-green-600"
-                : "text-red-600"
-            }`}
-          >
-            {cMensaje}
-          </div>
-        )}
-
-        <form onSubmit={f_registrar} className="space-y-4">
-          {[ 
-            {
-              label: "Registro",
-              type: "number",
-              value: p_nRegistro,
-              onChange: setRegistro,
-            },
-            {
-              label: "Nombre",
-              type: "text",
-              value: p_cNombre,
-              onChange: setNombre,
-            },
-            {
-              label: "Apellido",
-              type: "text",
-              value: p_cApellido,
-              onChange: setApellido,
-            },
-          ].map(({ label, type, value, onChange }) => (
-            <div key={label}>
-              <label className="block text-sm font-medium text-gray-700">
-                {label}
-              </label>
-              <input
-                type={type}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                required
-                className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          ))}
-
-          <div className="text-center">
-            <Button type="submit" variant="red">
-              REGISTRAR
-            </Button>
-          </div>
-        </form>
-      </div>
+        <div className="mb-3">
+          <label htmlFor="apellido" className="form-label">Apellido</label>
+          <input 
+            type="text" 
+            className="form-control" 
+            id="apellido" 
+            name="apellido"
+            value={formData.apellido}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="correo" className="form-label">Correo</label>
+          <input 
+            type="email" 
+            className="form-control" 
+            id="correo" 
+            name="correo"
+            value={formData.correo}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="departamento" className="form-label">Departamento</label>
+          <input 
+            type="text" 
+            className="form-control" 
+            id="departamento" 
+            name="departamento"
+            value={formData.departamento}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="cedula" className="form-label">Cédula</label>
+          <input 
+            type="text" 
+            className="form-control" 
+            id="cedula" 
+            name="cedula"
+            value={formData.cedula}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <button type="submit" className="btn btn-primary">Registrar</button>
+      </form>
     </div>
   );
 }
+
+export default RegistrarDocente;
