@@ -1,10 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
-import logo from "../assets/logo.png";
-import Button from "../components/Button";
+import logo from "../../assets/logo.png";
+import Button from "../Button";
 
-export default function RegistrarDocente() {
-  const [p_nRegistro, setRegistro] = useState("");
+export default function DocenteModal(isOpen, onClose, onAgregarDocente) {
   const [p_cNombre, setNombre] = useState("");
   const [p_cApellido, setApellido] = useState("");
   const [cMensaje, setMensaje] = useState("");
@@ -12,20 +11,21 @@ export default function RegistrarDocente() {
   const f_registrar = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:4000/docentes/registrar-docente", {
-        p_nRegistro,
+      const res = await axios.post("http://localhost:4000/docentes", {
         p_cNombre,
         p_cApellido,
       });
       setMensaje(res.data.mensaje);
-      setRegistro("");
       setNombre("");
       setApellido("");
+      if(onAgregarDocente) onAgregarDocente();
     } catch (err) {
       console.error(err);
       setMensaje("Error al registrar docente");
     }
   };
+
+  if(!isOpen) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center px-4">
@@ -33,7 +33,7 @@ export default function RegistrarDocente() {
         <div className="flex flex-col items-center mb-6">
           <img src={logo} alt="Logo" className="h-20 mb-4" />
           <h2 className="text-2xl font-semibold text-gray-800">
-            Registro de Persona
+            Registro de Docente
           </h2>
         </div>
 
@@ -51,12 +51,6 @@ export default function RegistrarDocente() {
 
         <form onSubmit={f_registrar} className="space-y-4">
           {[ 
-            {
-              label: "Registro",
-              type: "number",
-              value: p_nRegistro,
-              onChange: setRegistro,
-            },
             {
               label: "Nombre",
               type: "text",
@@ -84,9 +78,13 @@ export default function RegistrarDocente() {
             </div>
           ))}
 
-          <div className="text-center">
+          <div className="text-center space-x-4">
             <Button type="submit" variant="red">
               REGISTRAR
+            </Button>
+
+            <Button type="button" variant="gray" onClick={onClose}>
+              Cancelar
             </Button>
           </div>
         </form>

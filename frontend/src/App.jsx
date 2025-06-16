@@ -8,7 +8,7 @@ import RegistrarEstudiante from "./pages/RegistrarEstudiante";
 import EliminarUsuario from "./pages/EliminarUsuario";
 import GestionarMaterial from "./pages/GestionarMaterial";
 import ListadoPrestamos from "./pages/ListadoPrestamos";
-import RegistrarDocente from "./pages/RegistrarDocente";
+import Docente from "./pages/Docentes";
 import React from "react";
 function App() {
   return (
@@ -23,7 +23,7 @@ function App() {
         <Route path="/eliminar-usuario" element={<EliminarUsuario />} />
         <Route path="/material" element={<GestionarMaterial />} />
         <Route path="/listado-prestamos" element={<ListadoPrestamos />} />
-        <Route path="/registrar-docente" element={<RegistrarDocente />} />
+        <Route path="/docentes" element={<Docente />} />
       </Routes>
     </BrowserRouter>
   );
