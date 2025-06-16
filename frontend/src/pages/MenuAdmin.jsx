@@ -23,7 +23,7 @@ export default function MenuAdmin() {
         <h1 className="text-4xl font-bold text-center">MENU PRINCIPAL</h1>
       </header>
 
-      <main className="flex flex-1 items-center justify-center text-white">
+      <main className="flex flex-1 items-center justify-center">
         <div className="grid grid-cols-3 grid-rows-3 gap-14 p-10 ">
           <Button>Registrar Prestamo</Button>
           <Button>Registrar Devolucion</Button>

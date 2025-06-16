@@ -27,4 +27,3 @@ const DocenteBusqueda = ({ onBuscar }) => {
 };
 
 export default DocenteBusqueda;
-

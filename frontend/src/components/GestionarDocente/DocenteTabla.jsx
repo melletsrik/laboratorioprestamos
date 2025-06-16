@@ -1,5 +1,4 @@
 import React from 'react';
-
 export default function DocenteTabla({ docentes }) {
   return (
     <div className='bg-white rounded-lg shadow-lg overflow-hidden'>
