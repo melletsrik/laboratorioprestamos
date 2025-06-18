@@ -1,31 +1,32 @@
-  const express = require('express');
-  const router = express.Router();
-  const estudianteController = require('../controllers/estudiante.controller');
-  const roleMiddleware = require('../middlewares/permission.middleware');
+const express = require('express');
+const router = express.Router();
+const estudianteController = require('../controllers/estudiante.controller');
+const permissionMiddleware = require('../middlewares/permission.middleware');
+const { PERMISSIONS } = require('../constants/permissions');
 
-  router.get('/', 
-    roleMiddleware(['listar_estudiantes']),
-    estudianteController.getAll
-  );
+router.get('/',
+  permissionMiddleware([PERMISSIONS.ESTUDIANTE_LISTAR]),
+  estudianteController.getAll
+);
 
-  router.get('/buscar/nombre', 
-    roleMiddleware(['buscar_estudiante']),
-    estudianteController.getByName
-  );
+router.get('/buscar/estudiante',
+  permissionMiddleware([PERMISSIONS.ESTUDIANTE_BUSCAR]),
+  estudianteController.getByName
+);
 
-  router.get('/buscar/registro', 
-    roleMiddleware(['buscar_estudiante']),
-    estudianteController.getByRegister
-  );
+router.get('/:registro',
+  permissionMiddleware([PERMISSIONS.ESTUDIANTE_BUSCAR]),
+  estudianteController.getByRegister
+);
 
-  router.post('/', 
-    roleMiddleware(['registrar_estudiantes']),
-    estudianteController.create
-  );
+router.post('/',
+  permissionMiddleware([PERMISSIONS.ESTUDIANTE_REGISTRAR]),
+  estudianteController.create
+);
 
-  router.put('/:id',
-    roleMiddleware(['editar_estudiantes']),
-    estudianteController.update
-  );
+router.put('/:id',
+  permissionMiddleware([PERMISSIONS.ESTUDIANTE_MODIFICAR]),
+  estudianteController.update
+);
 
-  module.exports = router;
+module.exports = router;

@@ -28,7 +28,15 @@ module.exports = {
     
     // Auxiliares
     AUXILIAR_REGISTRAR: 'auxiliar:registrar',
-    AUXILIAR_LISTAR: 'auxiliar:listar'
+    AUXILIAR_LISTAR: 'auxiliar:listar',
+
+    // Materias
+    MATERIA_REGISTRAR: 'materia:registrar',
+    MATERIA_MODIFICAR: 'materia:modificar',
+    MATERIA_LISTAR: 'materia:listar',
+    MATERIA_BUSCAR: 'materia:buscar',
+
+
   },
   
   ROLE_PERMISSIONS: {
@@ -38,12 +46,14 @@ module.exports = {
       'docente:registrar', 'docente:listar', 'docente:modificar',
       'prestamo:registrar', 'prestamo:devolucion',
       'auxiliar:registrar', 'auxiliar:listar',
+      'materia:registrar', 'materia:modificar','materia:listar','materia:buscar',
     ],
     Auxiliar: [
       'material:listar', 'material:buscar',
       'estudiante:registrar', 'estudiante:modificar', 'estudiante:listar', 'estudiante:buscar',
       'docente:registrar', 'docente:listar',
-      'prestamo:registrar', 'prestamo:devolucion'
+      'prestamo:registrar', 'prestamo:devolucion',
+      'materia:registrar', 'materia:modificar','materia:listar','materia:buscar',
     ]
   }
 };

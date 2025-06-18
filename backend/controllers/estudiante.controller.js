@@ -3,42 +3,30 @@ const EstudianteService = require("../services/estudiante.service");
 exports.getAll = async (req, res) => {
   try {
     const result = await EstudianteService.getAll();
-    res.status(200).json({
-      success: true,
-      data: result.data,
-      message: result.message,
-    });
+    res.status(result.success ? 200 : 400).json(result);
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: "Error al obtener estudiantes",
-      message: error.message,
+      message: "Error del servidor",
     });
   }
 };
 
 exports.create = async (req, res) => {
   try {
-    const result = await EstudianteService.create(req.body);
-
-    if (!result.success) {
+    if (!req.body.nombre || !req.body.apellido || !req.body.registro) {
       return res.status(400).json({
         success: false,
-        error: result.error,
-        message: result.message,
+        message: "Datos incompletos",
       });
     }
 
-    res.status(201).json({
-      success: true,
-      data: result.data,
-      message: result.message,
-    });
+    const result = await EstudianteService.create(req.body);
+    res.status(result.success ? 201 : 400).json(result);
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: "Error al crear estudiante",
-      message: error.message,
+      message: "Error del servidor",
     });
   }
 };
@@ -46,33 +34,20 @@ exports.create = async (req, res) => {
 exports.getByName = async (req, res) => {
   try {
     const { nombre } = req.query;
+
     if (!nombre) {
       return res.status(400).json({
         success: false,
-        error: "El parámetro 'nombre' es requerido",
+        message: "Nombre requerido",
       });
     }
 
     const result = await EstudianteService.getByName(nombre);
-
-    if (!result.success) {
-      return res.status(404).json({
-        success: false,
-        error: result.error,
-        message: result.message,
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: result.data,
-      message: result.message,
-    });
+    res.status(result.success ? 200 : 404).json(result);
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: "Error al buscar estudiantes por nombre",
-      message: error.message,
+      message: "Error del servidor",
     });
   }
 };
@@ -80,27 +55,11 @@ exports.getByName = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const result = await EstudianteService.update(req.params.id, req.body);
-
-    if (!result.success) {
-      return res
-        .status(result.error === "Estudiante no encontrado" ? 404 : 400)
-        .json({
-          success: false,
-          error: result.error,
-          message: result.message,
-        });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: result.data,
-      message: result.message,
-    });
+    res.status(result.success ? 200 : 404).json(result);
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: "Error al actualizar estudiante",
-      message: error.message,
+      message: "Error del servidor",
     });
   }
 };
@@ -108,33 +67,20 @@ exports.update = async (req, res) => {
 exports.getByRegister = async (req, res) => {
   try {
     const { registro } = req.query;
+
     if (!registro) {
       return res.status(400).json({
         success: false,
-        error: "El parámetro 'registro' es requerido",
+        message: "Registro requerido",
       });
     }
 
     const result = await EstudianteService.getByRegister(registro);
-
-    if (!result.success) {
-      return res.status(404).json({
-        success: false,
-        error: result.error,
-        message: result.message,
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: result.data,
-      message: result.message,
-    });
+    res.status(result.success ? 200 : 404).json(result);
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: "Error al buscar estudiantes por registro",
-      message: error.message,
+      message: "Error del servidor",
     });
   }
 };

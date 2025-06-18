@@ -8,18 +8,19 @@ class EstudianteService {
         include: {
           model: Persona,
           as: "persona",
+          attributes: ["nombre", "apellido"],
         },
+        attributes: ["id_estudiante", "Registro"],
       });
       return {
         success: true,
         data: estudiantes,
-        message: "Estudiantes obtenidos exitosamente",
+        message: "Lista de estudiantes obtenida",
       };
     } catch (error) {
       console.error("Error en EstudianteService.getAll:", error);
       return {
         success: false,
-        error: error.message,
         message: "Error al obtener estudiantes",
       };
     }
@@ -33,7 +34,22 @@ class EstudianteService {
         !dataEstudiante.apellido ||
         !dataEstudiante.registro
       ) {
-        throw new Error("Nombre, apellido y registro son obligatorios");
+        return {
+          success: false,
+          message: "Datos incompletos",
+        };
+      }
+
+      // Verificar si el registro ya existe
+      const registroExistente = await Estudiante.findOne({
+        where: { Registro: dataEstudiante.registro },
+      });
+
+      if (registroExistente) {
+        return {
+          success: false,
+          message: "El registro ya existe",
+        };
       }
 
       const persona = await Persona.create(
@@ -53,18 +69,18 @@ class EstudianteService {
       );
 
       await transaction.commit();
+
       return {
         success: true,
-        data: { ...estudiante.toJSON(), persona: persona.toJSON() },
-        message: "Estudiante creado exitosamente",
+        data: { ...estudiante.toJSON(), persona },
+        message: "Estudiante registrado",
       };
     } catch (error) {
       await transaction.rollback();
       console.error("Error en EstudianteService.create:", error);
       return {
         success: false,
-        error: error.message,
-        message: "Error al crear estudiante",
+        message: "Error al registrar estudiante",
       };
     }
   }
@@ -87,20 +103,18 @@ class EstudianteService {
       if (estudiantes.length === 0) {
         return {
           success: false,
-          message: "No se encontraron estudiantes con ese nombre",
+          message: "No se encontraron estudiantes",
         };
       }
-
       return {
         success: true,
         data: estudiantes,
-        message: "Búsqueda exitosa",
+        message: "Búsqueda completada",
       };
     } catch (error) {
       console.error("Error en EstudianteService.getByName:", error);
       return {
         success: false,
-        error: error.message,
         message: "Error al buscar estudiantes",
       };
     }
@@ -117,7 +131,28 @@ class EstudianteService {
       });
 
       if (!estudiante) {
-        throw new Error("Estudiante no encontrado");
+        return {
+          success: false,
+          message: "Estudiante no encontrado",
+        };
+      }
+
+      // Verificar si se está cambiando el registro y si ya existe
+      if (
+        dataEstudiante.registro &&
+        dataEstudiante.registro !== estudiante.Registro
+      ) {
+        const existeRegistro = await Estudiante.findOne({
+          where: { Registro: dataEstudiante.registro },
+          transaction,
+        });
+
+        if (existeRegistro) {
+          return {
+            success: false,
+            message: "El registro ya está en uso",
+          };
+        }
       }
 
       // Actualizar datos de persona
@@ -130,7 +165,7 @@ class EstudianteService {
       );
 
       // Actualizar datos de estudiante
-      const estActualizado = await estudiante.update(
+      await estudiante.update(
         {
           Registro: dataEstudiante.registro || estudiante.Registro,
         },
@@ -138,17 +173,17 @@ class EstudianteService {
       );
 
       await transaction.commit();
+
       return {
         success: true,
-        data: estActualizado,
-        message: "Estudiante actualizado exitosamente",
+        data: estudiante,
+        message: "Estudiante actualizado",
       };
     } catch (error) {
       await transaction.rollback();
       console.error("Error en EstudianteService.update:", error);
       return {
         success: false,
-        error: error.message,
         message: "Error al actualizar estudiante",
       };
     }
@@ -161,23 +196,27 @@ class EstudianteService {
         include: {
           model: Persona,
           as: "persona",
+          attributes: ["nombre", "apellido"],
         },
+        attributes: ["id_estudiante", "Registro"],
       });
 
       if (!estudiante) {
-        throw new Error("Estudiante no encontrado");
+        return {
+          success: false,
+          message: "Estudiante no encontrado",
+        };
       }
 
       return {
         success: true,
         data: estudiante,
-        message: "Estudiante encontrado exitosamente",
+        message: "Estudiante encontrado",
       };
     } catch (error) {
       console.error("Error en EstudianteService.getByRegister:", error);
       return {
         success: false,
-        error: error.message,
         message: "Error al buscar estudiante",
       };
     }
