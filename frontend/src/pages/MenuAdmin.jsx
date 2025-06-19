@@ -13,6 +13,9 @@ export default function MenuAdmin() {
   const handleVentanaDocente = () => {
     navegar("/docentes");
   };
+  const handleRegistrarEstudiante= () => {
+    navegar("/registrar-estudiante");
+  };
 
   return (
     <div className="flex flex-col text-white">
@@ -28,7 +31,7 @@ export default function MenuAdmin() {
           <Button>Registrar Prestamo</Button>
           <Button>Registrar Devolucion</Button>
           <Button onClick={handleVerStock}> Stock Materiales</Button>
-          <Button>Registrar Estudiante</Button>
+          <Button onClick={handleRegistrarEstudiante}>Registrar Estudiante</Button>
           <Button onClick={handleVentanaDocente}>Ventana Docente</Button>
           <Button>Agregar Materia</Button>
           <Button onClick={handleRegistrarUsuario}>Ventana Auxiliar</Button>

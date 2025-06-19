@@ -4,6 +4,7 @@ import DocenteTabla from "../components/GestionarDocente/DocenteTabla";
 import DocenteBusqueda from "../components/GestionarDocente/DocenteBusqueda";
 import DocenteModal from "../components/GestionarDocente/DocenteModal";
 import { Auth } from "../utils/auth";
+import Button from "../components/Button";
 
 export default function Docente () {
   // Estado para docentes
@@ -11,10 +12,11 @@ export default function Docente () {
   const [docentes, setDocentes] = useState([]); //estado para todos la lista docentes
   const [modalAbierto, setModalAbierto] = useState(false); // Estado para el modal
   const [docenteFiltrados, setDocentesFiltrados]= useState([]);//filtrara en busqueda de docentes
+  const [docenteEditar, setDocenteEditar] = useState(null);
   const [mensaje, setMensaje] = useState(""); // mostrara mensaje de error o exito
  
   // Función para cambiar el estado del docente
-  const cambiarEstado = async (idDocente, estado) => {
+  const EditarDocente = async (datosEditados) => {
     try {
       const token = Auth.getToken();
       if (!token) {
@@ -24,31 +26,30 @@ export default function Docente () {
 
       // Actualizar en el backend
       const response = await axios.put(
-        `http://localhost:4000/api/docentes/${idDocente}/estado`,
-        { 
-          activo: estado
+        `http://localhost:4000/api/docentes/${datosEditados.id_docente}`,
+        {
+          nombre: datosEditados.nombre,
+          apellido: datosEditados.apellido,
+          estado: datosEditados.estado
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-          }
+            'Content-Type': 'application/json'
         }
+      }
       );
 
-      if (response.data.success) {
-        // Actualizar localmente
-        const nuevosDocentes = docentes.map(doc => 
-          doc.id_docente === idDocente ? { ...doc, activo: estado } : doc
-        );
-        setDocentes(nuevosDocentes);
-        setDocentesFiltrados(nuevosDocentes);
-        setMensaje(estado ? 'Docente activado correctamente' : 'Docente desactivado correctamente');
+      if (response.data && response.data.success) {
+      listadoDocentes();
+      setMensaje('Docente editado correctamente');
+      setModalAbierto(false);
+      setDocenteEditar(null);
       } else {
-        setMensaje(response.data.message || (estado ? 'Error al activar docente' : 'Error al desactivar docente'));
+        throw new Error(response.data.message || "Error al editar docente");
       }
     } catch (error) {
-      console.error('Error al cambiar estado:', error);
-      setMensaje(`Error al ${estado ? 'activar' : 'desactivar'} docente: ${error.response?.data?.message || error.message}`);
+      setMensaje(error.response?.data?.message || "Error al editar docente: " + error.message);
     }
   };
 
@@ -77,10 +78,10 @@ export default function Docente () {
         setMensaje(response.data?.message || 'No se pudieron cargar los docentes');
       }
     }catch (error){
-        console.error("Error al cargar docentes:", error);
-        setDocentes([]);
-        setDocentesFiltrados([]);
-        setMensaje(response.data?.message || 'No se pudieron cargar los docentes');
+      console.error("Error al cargar docentes:", error);
+      setDocentes([]);
+      setDocentesFiltrados([]);
+      setMensaje(error.response?.data?.message || 'No se pudieron cargar los docentes');
     }finally {
         setCargando(false);
     }
@@ -112,7 +113,7 @@ export default function Docente () {
           throw new Error(response.data.message || "Error al agregar docente");
         }
       }catch (error){
-        console.error("Error al agregar docente:", error);
+        console.error("Error al agregar docente:", error.response?.data || error);
         setMensaje(error.response?.data?.message || "Error al agregar docente");
       }
     };
@@ -130,10 +131,10 @@ export default function Docente () {
       }
     };
     //Funcion editar docente
-    const onEditar =(id)=>{
-      setMensaje(`Editando docente con ID: ${id}`);
-    console.log('Editando docente:', id);
-     };
+    const onEditar = (docente) => {
+      setDocenteEditar(docente);
+      setModalAbierto(true);
+    };
 
      
   return (
@@ -144,9 +145,10 @@ export default function Docente () {
         {/* Barra de búsqueda y botón agregar */}
         <div className="flex justify-between items-center mb-4">
           <DocenteBusqueda onBuscar={buscarDocente} />
-          <button onClick={() => setModalAbierto(true)} className="bg-red-700 hover:bg-red-750 text-white px-6 py-2 rounded-md font-semibold transition-colors">
+          <Button variant="red" onClick={() => setModalAbierto(true)} 
+            className="px-3 py-1 rounded-md font-semibold transition-colors cursor-pointer w-full sm:w-auto">
             Agregar Docente
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -158,11 +160,22 @@ export default function Docente () {
       )}
 
       {/* Tabla de docentes */}
-      <DocenteTabla docentes={docenteFiltrados} cambiarEstado={cambiarEstado} onEditar={onEditar} />
+      <DocenteTabla 
+        docentes={docenteFiltrados} 
+        onEditar={onEditar} 
+      />
 
       {/* Modal  */}
-      <DocenteModal isOpen={modalAbierto} onClose={() => setModalAbierto(false)} onAgregarDocente={AgregarDocente} />
-      
+      <DocenteModal
+        isOpen={modalAbierto}
+        onClose={() => {
+          setModalAbierto(false);
+          setDocenteEditar(null);
+        }}
+        onAgregarDocente={AgregarDocente}
+        docenteEditar={docenteEditar}
+        onEditarDocente={EditarDocente}
+      />
       {cargando && (
         <div className="flex justify-center items-center h-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>

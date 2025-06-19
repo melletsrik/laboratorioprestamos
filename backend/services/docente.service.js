@@ -28,6 +28,7 @@ class DocenteService {
   static async create(dataDocente) {
     const transaction = await sequelize.transaction();
     try {
+      console.log("Datos recibidos para crear docente:", dataDocente);
       if (!dataDocente.nombre || !dataDocente.apellido) {
         return {
           success: false,
@@ -41,7 +42,8 @@ class DocenteService {
       }, { transaction });
 
       const docente = await Docente.create({
-        id_persona: persona.id_persona
+        id_persona: persona.id_persona,
+        estado: dataDocente.estado !== undefined ? dataDocente.estado : 1
       }, { transaction });
 
       await transaction.commit();
@@ -114,10 +116,18 @@ class DocenteService {
         };
       }
 
+      // Actualiza nombre y apellido
       await docente.persona.update({
         nombre: dataDocente.nombre || docente.persona.nombre,
         apellido: dataDocente.apellido || docente.persona.apellido
       }, { transaction });
+
+      // Actualiza estado si viene en el body
+      if (typeof dataDocente.estado !== "undefined") {
+        await docente.update({
+          estado: dataDocente.estado
+        }, { transaction });
+      }
 
       await transaction.commit();
       return {

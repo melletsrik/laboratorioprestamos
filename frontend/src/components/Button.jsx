@@ -11,6 +11,7 @@ export default function Button({ children, variant = "gray", className = "", ...
     break-words
     shadow-md
     transition duration-300
+    cursor-pointer
   `;
 
   const variants = {
@@ -29,6 +30,13 @@ export default function Button({ children, variant = "gray", className = "", ...
       hover:bg-[var(--color-terciary)]
       text-[var(--color-black)]
     `,
+    blue: `
+      bg-blue-500
+      hover:bg-blue-800
+      text-white
+    `,
+
+
   };
 
   return (

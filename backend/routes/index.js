@@ -7,7 +7,6 @@ const materialRoutes = require('./material.routes');
 const docenteRoutes = require('./docente.routes');
 const auxiliarRoutes = require('./usuario.routes'); //EN SI SON LAS RUTAS DE USUARIO
 const estudianteRoutes = require('./estudiante.routes');
-const materiaRoutes = require('./materia.routes');
 
 // Rutas publicas
 router.use('/auth', authRoutes);
@@ -17,6 +16,6 @@ router.use('/materiales', materialRoutes);
 router.use('/docentes', docenteRoutes);
  router.use('/auxiliares', auxiliarRoutes);
 router.use('/estudiantes', estudianteRoutes);
-router.use('/materias',materiaRoutes);
+
 // Exporta el router
 module.exports = router;

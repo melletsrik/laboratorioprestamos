@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
+import Button from "../components/Button";
 
 export default function Login() {
   const [nombreUsuario, setNombreUsuario] = useState("");
@@ -91,13 +92,13 @@ export default function Login() {
             />
           </div>
 
-          <button
+          <Button
             type="submit"
             style={{ backgroundColor: "var(--color-primary)" }}
             className="w-full py-2 hover:brightness-90 text-white font-bold rounded-md"
           >
             INICIAR SESIÓN
-          </button>
+          </Button>
         </form>
       </div>
     </div>

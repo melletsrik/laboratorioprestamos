@@ -52,6 +52,13 @@ class EstudianteService {
         };
       }
 
+      const existe = await Estudiante.findOne({
+        where: { Registro: dataEstudiante.registro }
+      });
+      if (existe) {
+        throw new Error("Ya existe un estudiante con ese registro");
+      }
+
       const persona = await Persona.create(
         {
           nombre: dataEstudiante.nombre,
