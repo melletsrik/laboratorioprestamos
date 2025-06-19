@@ -32,9 +32,9 @@ export default function MenuAdmin() {
           <Button>Registrar Devolucion</Button>
           <Button onClick={handleVerStock}> Stock Materiales</Button>
           <Button onClick={handleRegistrarEstudiante}>Registrar Estudiante</Button>
-          <Button onClick={handleVentanaDocente}>Ventana Docente</Button>
-          <Button>Agregar Materia</Button>
-          <Button onClick={handleRegistrarUsuario}>Ventana Auxiliar</Button>
+          <Button onClick={handleVentanaDocente}>Registrar Docente</Button>
+          <Button>Registar Materia</Button>
+          <Button onClick={handleRegistrarUsuario}>Registrar Auxiliar</Button>
           <Button>Agregar Material</Button>
           <div />
         </div>

@@ -21,7 +21,7 @@ export default function MenuAux() {
       </header>
       <main className="flex flex-1 items-center justify-center">
         <div className="grid grid-cols-3 grid-rows-3 gap-14 p-10">
-          <Button onClick={handleRegistrarPrestamo}> Registrar Prestamo</Button> 
+          <Button onClick={handleRegistrarPrestamo}>Registrar Prestamo</Button> 
 
           <Button>Registrar Devolucion</Button>
 

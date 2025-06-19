@@ -42,7 +42,7 @@ CREATE TABLE Estudiante (
 CREATE TABLE Docente (
     id_docente INT AUTO_INCREMENT,
     id_persona INT NOT NULL,
-    etado BOOLEAN,
+    estado BOOLEAN,
     PRIMARY KEY(id_docente),
     FOREIGN KEY(id_persona) REFERENCES Persona(id_persona)
 );
