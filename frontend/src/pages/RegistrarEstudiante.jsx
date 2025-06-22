@@ -1,217 +1,270 @@
 import { useState, useEffect } from "react"; 
+import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import EstudianteTabla from "../components/GestionarEstudiantes/EstudianteTabla";
 import EstudiantesBusqueda from "../components/GestionarEstudiantes/EstudiantesBusqueda";
 import EstudianteModal from "../components/GestionarEstudiantes/EstudianteModal";
 import { Auth } from "../utils/auth";
 import Button from "../components/Button";
-
-export default function RegistrarEstudiante () {
-  // Estado para Estudiantes
-  const [cargando, setCargando]= useState(false); //estado de carga
-  const [estudiantes, setEstudiantes] = useState([]); //estado para todos la lista Estudiantes
-  const [modalAbierto, setModalAbierto] = useState(false); // Estado para el modal
+import { LuLogOut } from "react-icons/lu";
+import { IoArrowBackCircleOutline } from "react-icons/io5";
+import { FiPackage, FiPlus } from "react-icons/fi";
+import { LuGraduationCap } from "react-icons/lu";
+export default function RegistrarEstudiante() {
+  const [cargando, setCargando] = useState(false);
+  const [estudiantes, setEstudiantes] = useState([]);
+  const [estudiantesFiltrados, setEstudiantesFiltrados] = useState([]);
+  const [modalAbierto, setModalAbierto] = useState(false);
   const [estudianteEditar, setEstudianteEditar] = useState(null);
-  const [estudiantesFiltrados, setEstudiantesFiltrados] = useState([]);//filtrara en busqueda de Estudiantes
-  const [mensaje, setMensaje] = useState(""); // mostrara mensaje de error o exito
- 
-  // Función para cambiar el estado del Estudiante
+  const [mensaje, setMensaje] = useState("");
+
+  const token = Auth.getToken("token");
+  const navegar = useNavigate();
+
+  useEffect(() => {
+    if (!token) {
+      navegar("/");
+    }
+  }, [token, navegar]);
+
+  if (!token) return null;
+
+  const listadoEstudiantes = async () => {
+    setCargando(true);
+    try {
+      const response = await axios.get("http://localhost:4000/api/estudiantes", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.data && response.data.success) {
+        setEstudiantes(response.data.data);
+        setEstudiantesFiltrados(response.data.data);
+        setMensaje("Estudiantes cargados correctamente");
+      } else {
+        setEstudiantes([]);
+        setEstudiantesFiltrados([]);
+        setMensaje(response.data?.message || "No se pudieron cargar los estudiantes");
+      }
+    } catch (error) {
+      console.error("Error al cargar estudiantes:", error);
+      setEstudiantes([]);
+      setEstudiantesFiltrados([]);
+      setMensaje(error.response?.data?.message || "Error al cargar los estudiantes");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    listadoEstudiantes();
+  }, []);
+
+  useEffect(() => {
+    if (mensaje) {
+      const timer = setTimeout(() => setMensaje(""), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [mensaje]);
+
+  const AgregarEstudiante = async (nuevoEstudiante) => {
+    const existe = estudiantes.some(
+      (est) => Number(est.Registro) === Number(nuevoEstudiante.registro)
+    );
+    if (existe) {
+      window.alert("Ya existe un estudiante con ese registro");
+      return false;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:4000/api/estudiantes",
+        {
+          registro: nuevoEstudiante.registro,
+          nombre: nuevoEstudiante.nombre,
+          apellido: nuevoEstudiante.apellido,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        // Actualizar localmente con el nuevo estudiante
+        const nuevoEstudianteActualizado = {
+          ...nuevoEstudiante,
+          id_estudiante: response.data.data.id, // Usar el ID que devuelve el backend
+          Registro: nuevoEstudiante.registro
+        };
+        
+        // Actualizar el estado
+        const nuevosEstudiantes = [...estudiantes, nuevoEstudianteActualizado];
+        setEstudiantes(nuevosEstudiantes);
+        setEstudiantesFiltrados(nuevosEstudiantes);
+        
+        // Cerrar modal y mostrar mensaje
+        setModalAbierto(false);
+        setMensaje('Estudiante registrado exitosamente');
+        return true;
+      } else {
+        throw new Error(response.data.message || "Error al agregar estudiante");
+      }
+    } catch (error) {
+      console.error("Error al agregar estudiante:", error);
+      setMensaje(
+        error.response?.data?.message || error.response?.data?.error || error.message
+      );
+      return false;
+    }
+  };
+
   const EditarEstudiante = async (datosEditados) => {
     try {
-      const token = Auth.getToken();
-      if (!token) {
-        setMensaje('No hay sesión activa');
-        return null;
-      }
-
-      // Actualizar en el backend
       const response = await axios.put(
         `http://localhost:4000/api/estudiantes/${datosEditados.id_estudiante}`,
         {
           registro: datosEditados.registro,
           nombre: datosEditados.nombre,
-          apellido: datosEditados.apellido
+          apellido: datosEditados.apellido,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (response.data && response.data.success) {
-      listadoEstudiantes();
-      setMensaje('Estudiante editado correctamente');
-      setModalAbierto(false);
-      setEstudianteEditar(null);
-      } else {
-        throw new Error(response.data.message || "Error al editar Estudiante");
-      }
-      } catch (error) {
-        setMensaje(error.response?.data?.message || "Error al editar Estudiante: " + error.message);
-      }
-  };
-
-  // Token de autenticación
-  const token = Auth.getToken("token"); // Obtenemos el token 
-  //localStorage sirve para almacenar datos en el navegador, ej token JWT después de iniciar sesion
-  if (!token) {
-      setMensaje('No hay sesión activa');
-      return null;
-    }
-  const listadoEstudiantes = async ()=> {
-    setCargando(true); //mostrara q esta cargando..
-    try {
-      const response = await axios.get("http://localhost:4000/api/estudiantes", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.data && response.data.success){
-        setEstudiantes(response.data.data);
-        setEstudiantesFiltrados(response.data.data);
-        setMensaje('Estudiantes cargados correctamente');
-      }else{
-        setEstudiantes([]);
-        setEstudiantesFiltrados([]);
-        setMensaje(response.data?.message || 'No se pudieron cargar los Estudiantes');
-      }
-    }catch (error) {
-        console.error("Error al cargar Estudiantes:", error);
-        setEstudiantes([]);
-        setEstudiantesFiltrados([]);
-      const mensajeError = error.response?.data?.message || 'No se pudieron cargar los Estudiantes';
-      setMensaje(mensajeError);
-    }
-  };
-    useEffect (() =>{
-      listadoEstudiantes();
-    },[]);
-
-    // Función para agregar Estudiante dentro del modal
-    const AgregarEstudiante = async (nuevoEstudiante) => {
-    const existe = estudiantes.some(
-      est => Number(est.Registro) === Number(nuevoEstudiante.registro)
-    );
-    if (existe) {
-      setMensaje("Ya existe un estudiante con ese registro");
-      window.alert("Ya existe un estudiante con ese registro");
-      return false; // <--- El modal sigue abierto porque aquí termina la función
-    }
-    try {
-      const token = Auth.getToken();
-      if (!token) {
-        setMensaje("No hay sesión activa");
-        window.alert("No hay sesión activa");
-        return false;
-      }
-
-      // Envía todos los datos directamente al backend
-      const estudianteFormateado = {
-        registro: nuevoEstudiante.registro,
-        nombre: nuevoEstudiante.nombre,
-        apellido: nuevoEstudiante.apellido
-      };
-
-      const response = await axios.post(
-        "http://localhost:4000/api/estudiantes",
-        estudianteFormateado,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 
       if (response.data && response.data.success) {
         listadoEstudiantes();
-        setMensaje('Estudiante agregado correctamente');
-        window.alert('¡Estudiante registrado exitosamente!');
-        setModalAbierto(false); // Cierra el modal si todo sale bien
-        return true;
+        setMensaje("Estudiante editado correctamente");
+        setModalAbierto(false);
+        setEstudianteEditar(null);
       } else {
-        throw new Error(response.data.message || "Error al agregar Estudiante");
+        throw new Error(response.data.message || "Error al editar estudiante");
       }
-      } catch (error) {
-      console.error("Error detallado:", error);
-      setMensaje(error.response?.data?.message || 
-        error.response?.data?.error || 
-        "Error al agregar Estudiante: " + error.message);
-      window.alert(error.response?.data?.message || 
-        error.response?.data?.error || 
-        "Error al agregar Estudiante: " + error.message); // <-- ALERTA para errores backend
-        return false;
+    } catch (error) {
+      setMensaje(error.response?.data?.message || error.message);
     }
   };
 
-    //funcion de busqueda
-    const buscarEstudiante= (terminoBusqueda) =>{
-      if(terminoBusqueda.trim () === ""){
-        setEstudiantesFiltrados(estudiantes);
-        return;
-      }else{
-        const filtrados= estudiantes.filter(est => 
-          est.Registro.toLowerCase().includes(terminoBusqueda.toLowerCase()) || 
+  const buscarEstudiante = (terminoBusqueda) => {
+    if (terminoBusqueda.trim() === "") {
+      setEstudiantesFiltrados(estudiantes);
+    } else {
+      const filtrados = estudiantes.filter(
+        (est) =>
+          est.Registro.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
           est.persona.nombre.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
           est.persona.apellido.toLowerCase().includes(terminoBusqueda.toLowerCase())
       );
       setEstudiantesFiltrados(filtrados);
-      }
-    };
-    //Funcion editar Estudiante
-    const onEditar = (estudiante) => {
-      setEstudianteEditar(estudiante); // Guarda el estudiante a editar
-      setModalAbierto(true);           // Abre el modal
-    };
-     
-  return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">Gestión de Estudiantes</h1>
+    }
+  };
 
-        {/* Mensaje de éxito o error */}
-      {mensaje && (
-        <div className="mb-4 text-center text-green-600 font-semibold">
-          {mensaje}
-        </div>
-      )}
-        
-        {/* Barra de búsqueda y botón agregar */}
-        <div className="flex justify-between items-center mb-4 gap-2">
-          <EstudiantesBusqueda 
-            onBuscar={buscarEstudiante} 
-            />
-          <Button variant="red" onClick={() => 
-            setModalAbierto(true)} 
-            className="px-3 py-1 rounded-md font-semibold transition-colors cursor-pointer w-full sm:w-auto">
-            Agregar Estudiante
-          </Button>
+  const onEditar = (estudiante) => {
+    setEstudianteEditar(estudiante);
+    setModalAbierto(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <button
+                       onClick={() => {
+  const rol = localStorage.getItem("rol");
+  if (rol === "Administrativo") {
+    navegar("/menu-admin");
+  } else {
+    navegar("/menu-aux");
+  }
+}}  className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
+            >
+              <IoArrowBackCircleOutline className="w-6 h-6" />
+              Volver al Menú
+            </button>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                navegar("/");
+              }}
+              className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+            >
+              <LuLogOut className="w-5 h-5" />
+              Cerrar Sesión
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Loading spinner */}
-      
+      {/* Contenido principal */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Título */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-red-100 rounded-xl">
+              <LuGraduationCap className="w-8 h-8 text-red-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900">Lista de Estudiantes</h1>
+          </div>
 
-      {/* Tabla de Estudiantes */}
-      <EstudianteTabla 
-        estudiantes={estudiantesFiltrados} 
-        onEditar={onEditar} 
-      />
+          {/* Buscador y botón */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="sm:w-2/3 w-full">
+              <EstudiantesBusqueda onBuscar={buscarEstudiante} />
+            </div>
+            <div className="sm:w-auto w-full">
+              <Button
+                onClick={() => setModalAbierto(true)}
+                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl w-full sm:w-auto"
+              >
+                <FiPlus className="w-5 h-5" />
+                Agregar Estudiante
+              </Button>
+            </div>
+          </div>
+        </div>
 
-      {/* Modal  */}
+        {/* Mensaje */}
+        {mensaje && (
+          <div
+            className={`p-4 mb-4 rounded-md ${
+              mensaje.toLowerCase().includes("error")
+                ? "bg-red-100 text-red-700"
+                : "bg-green-100 text-green-700"
+            }`}
+          >
+            {mensaje}
+          </div>
+        )}
+
+        {/* Cargando */}
+        {cargando && (
+          <div className="flex justify-center items-center h-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
+          </div>
+        )}
+
+        {/* Tabla */}
+        <EstudianteTabla estudiantes={estudiantesFiltrados} onEditar={onEditar} />
+      </div>
+
+      {/* Modal */}
       <EstudianteModal
-      isOpen={modalAbierto}
-      onClose={() => {
-        setModalAbierto(false);
-        setEstudianteEditar(null);
-      }}
-      onAgregarEstudiante={AgregarEstudiante}
-      estudianteEditar={estudianteEditar}
-      onEditarEstudiante={EditarEstudiante}
-    />
-      
+        isOpen={modalAbierto}
+        onClose={() => {
+          setModalAbierto(false);
+          setEstudianteEditar(null);
+        }}
+        onAgregarEstudiante={AgregarEstudiante}
+        estudianteEditar={estudianteEditar}
+        onEditarEstudiante={EditarEstudiante}
+      />
     </div>
   );
 }

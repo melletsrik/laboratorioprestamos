@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../Button';
-
+import { FiX } from "react-icons/fi";
 export default function Modal({isOpen, onClose, onAgregarDocente, docenteEditar, onEditarDocente}) {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
@@ -64,14 +64,14 @@ export default function Modal({isOpen, onClose, onAgregarDocente, docenteEditar,
   if(!isOpen) return null;
 
   return(
-    <div className="fixed inset-0 bg-gray-200 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md mx-4"> 
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all">
+      <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl "> 
+        <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">
             {docenteEditar ? "Editar Docente" : "Registrar Docente"}
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl font-bold">
-            ×
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors text-xl font-bold">
+            <FiX />
           </button>
         </div>
         <form onSubmit={guardar} className="space-y-4 ">
@@ -85,7 +85,7 @@ export default function Modal({isOpen, onClose, onAgregarDocente, docenteEditar,
           </div>
           <div>
             <label className='block text-sm font-medium text-gray-700 mb-1'>Estado: </label>
-            <select value={estado} onChange={e => { setEstado(e.target.value); setErrorEstado(""); }}>
+            <select className="w-full px-4 py-2 border rounded-md" value={estado} onChange={e => { setEstado(e.target.value); setErrorEstado(""); }}>
               <option value="">Seleccione estado</option>
               <option value={1}>Activo</option>
               <option value={0}>Inactivo</option>
@@ -94,14 +94,23 @@ export default function Modal({isOpen, onClose, onAgregarDocente, docenteEditar,
               <div className="text-red-600 text-xs mt-1">{errorEstado}</div>
             )}
           </div>
-          <div className='flex justify-center'>
+          <div className='flex gap-x-6 gap-y-5 pt-4'>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+            >
+              Cancelar
+            </button>
+
             <Button
               type="submit"
               variant="red"
-              className="w-1/2 py-2 text-white font-semibold rounded-md"
+              className="flex-1 px-5 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
             >
               {docenteEditar ? "Editar" : "Guardar"}
             </Button>
+            
           </div>
         </form>
       </div>

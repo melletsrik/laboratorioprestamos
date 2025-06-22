@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react"; 
 import axios from 'axios';
+import { useNavigate } from "react-router-dom"; 
 import { carrerasDisponibles } from "../data/carreras";
 import MateriaTabla from "../components/VentanaMateria/MateriaTabla"; // para mostrar la tabla de materias
 import MateriaSearchBar from "../components/VentanaMateria/MateriaSearchBar"; // para buscar materias
 import MateriaModal from "../components/VentanaMateria/MateriaModal"; // para mostrar el modal de agregar materia
 import { Auth } from "../utils/auth";
+import { LuLogOut } from "react-icons/lu";
+import { IoArrowBackCircleOutline } from "react-icons/io5";
+import {  FiPlus } from "react-icons/fi";
+import { LuBookMarked } from "react-icons/lu";
 
 export default function VentanaMateria (){
   const [materia, setMateria] = useState([]);
@@ -13,13 +18,16 @@ export default function VentanaMateria (){
   const [modalAbierto, setModalAbierto] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [carrera, setCarrera] = useState(carrerasDisponibles);
+const navegar = useNavigate();
 
-  // Token de autenticación
-  const token = Auth.getToken();
-  if (!token) {
-    setMensaje('No hay sesión activa');
-    return null;
-  }
+  const token = Auth.getToken("token"); 
+  useEffect(() => {
+    if (!token) {
+      navegar("/");
+    }
+  }, [token, navegar]);
+
+  if (!token) return null;
 
   // Cargar lista de materias desde backend
   const cargarMateria = async () => {
@@ -100,18 +108,52 @@ export default function VentanaMateria (){
     cargarMateria();
   }, []);
 
-  // Ocultar mensaje automáticamente después de 5 segundos
+  // Ocultar mensaje automáticamente después de 1 segundos
   useEffect(() => {
     if (mensaje) {
-      const timer = setTimeout(() => setMensaje(""), 5000);
+      const timer = setTimeout(() => setMensaje(""), 1000);
       return () => clearTimeout(timer);
     }
   }, [mensaje]);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">Lista de Materia</h1>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => navegar("/menu-admin")}
+              className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
+            >
+              <IoArrowBackCircleOutline className="w-6 h-6" />
+              Volver al Menú
+            </button>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                navegar("/");
+              }}
+              className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+            >
+              <LuLogOut className="w-5 h-5" />
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </div>
+    <div className="max-w-7xl mx-auto px-6 py-8o">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-red-100 rounded-xl">
+                    <LuBookMarked className="w-8 h-8 text-red-600" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      Lista de Materias
+                    </h1>
+                  </div>
+                </div>
 
         {/* Mensaje */}
         {mensaje && (
@@ -149,6 +191,7 @@ export default function VentanaMateria (){
         onAgregarMateria={AgregarMateria}
         carrera={carrera}
       />
+    </div>
     </div>
   );
 }

@@ -4,22 +4,25 @@ import UsuarioTabla from "../components/VentanaUsuario/UsuarioTabla"; //para mos
 import UsuarioSearchBar from "../components/VentanaUsuario/UsuarioSearchBar"; //para buscar usuarios
 import ModalUsuario from "../components/VentanaUsuario/ModalUsuario"; //para mostrar el modal de agregar usuario
 import { Auth } from "../utils/auth";
-
+import { LuLogOut } from "react-icons/lu";
+import { IoArrowBackCircleOutline } from "react-icons/io5";
+import { useNavigate } from "react-router-dom"; 
+import { LuUserCheck } from "react-icons/lu";
 export default function VentanaUsuario() {
   const [usuario, setUsuario] = useState([]); //estado para todos los 
   const [usuarioFiltrados, setUsuarioFiltrados] = useState([]); //estado para 
   const [isLoading, setIsLoading] = useState(false); // estado de carga
   const [modalAbierto, setModalAbierto] = useState(false);
-
   const [mensaje, setMensaje] = useState("");
-// Token de autenticación
-  const token = Auth.getToken("token"); // Obtenemos el token 
-  //localStorage sirve para almacenar datos en el navegador, ej token JWT después de iniciar sesion
-  if (!token) {
-      setMensaje('No hay sesión activa');
-      return null;
+const navegar = useNavigate();
+const token = Auth.getToken("token"); 
+  useEffect(() => {
+    if (!token) {
+      navegar("/");
     }
+  }, [token, navegar]);
 
+  
  // Función para cargar auxiliares desde el backend
  const cargarUsuarios = async () => {
     setIsLoading(true);
@@ -35,16 +38,19 @@ export default function VentanaUsuario() {
         setUsuario(response.data.data);
         setUsuarioFiltrados(response.data.data);
         setMensaje('Usuarios cargados correctamente');
+      
       } else {
         setUsuario([]);
         setUsuarioFiltrados([]);
         setMensaje(response.data?.message || 'No se pudieron cargar los usuarios');
+       
       }
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
       setUsuario([]);
       setUsuarioFiltrados([]);
       setMensaje(`Error al cargar los usuario: ${error.response?.data?.message || error.message}`);
+      
     } finally {
       setIsLoading(false);
     }
@@ -53,6 +59,13 @@ export default function VentanaUsuario() {
   useEffect(() => {
     cargarUsuarios();
   }, []);
+    // Ocultar mensaje automáticamente después de 1 segundos
+  useEffect(() => {
+    if (mensaje) {
+      const timer = setTimeout(() => setMensaje(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [mensaje]);
   // Función para agregar usuario desdr modal
 const AgregarUsuario = async (nuevoUsuario) => {
   try {
@@ -125,16 +138,51 @@ const cambiarEstado = async (idUsuario, nuevoEstado) => {
        setUsuarioFiltrados(usuario);
      } else {
        const filtrados = usuario.filter(usuario =>
-         usuario.nombre.toLowerCase().includes(terminoBusqueda.toLowerCase())
+         usuario.nombre.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
+         usuario.nombre_usuario.toLowerCase().includes(terminoBusqueda.toLowerCase())
        );
        setUsuarioFiltrados(filtrados);
      }
    };
 
 return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">Lista de Usuarios</h1>
+  <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => navegar("/menu-admin")}
+              className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
+            >
+              <IoArrowBackCircleOutline className="w-6 h-6" />
+              Volver al Menú
+            </button>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                navegar("/");
+              }}
+              className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+            >
+              <LuLogOut className="w-5 h-5" />
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </div>
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-red-100 rounded-xl">
+                    <LuUserCheck className="w-8 h-8 text-red-600" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      Lista de Materiales
+                    </h1>
+                  </div>
+                </div>
         
         {/* Barra de búsqueda y botón agregar */}
         <div className="flex justify-between items-center mb-4">
@@ -164,6 +212,7 @@ return (
 
       {/* Modal */}
       <ModalUsuario isOpen={modalAbierto} onClose={() => setModalAbierto(false)} onAgregarUsuario={AgregarUsuario} />
+    </div>
     </div>
   );
 }

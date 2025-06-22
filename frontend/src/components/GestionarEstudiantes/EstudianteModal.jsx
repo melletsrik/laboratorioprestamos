@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../Button';
+import { FiX } from "react-icons/fi";
 
 export default function Modal({
   isOpen, 
@@ -49,53 +50,68 @@ export default function Modal({
       apellido: apellido.trim()
     };
 
-    let exito = false;
-    if (estudianteEditar) {
-      exito = await onEditarEstudiante({ ...datos, id_estudiante: estudianteEditar.id_estudiante });
-    } else {
-      exito = await onAgregarEstudiante(datos);
-    }
-    if (exito) {
-      setRegistro("");
-      setNombre("");
-      setApellido("");
-      onClose();
+    try {
+      let exito = false;
+      if (estudianteEditar) {
+        exito = await onEditarEstudiante({ ...datos, id_estudiante: estudianteEditar.id_estudiante });
+      } else {
+        exito = await onAgregarEstudiante(datos);
+      }
+
+      if (exito) {
+        // Limpiar campos y cerrar modal
+        setRegistro("");
+        setNombre("");
+        setApellido("");
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error al registrar/editar estudiante:', error);
+      if (setMensaje) {
+        setMensaje('Error al registrar/editar estudiante. Por favor, inténtelo de nuevo.');
+      }
     }
   };
 
   if(!isOpen) return null;
 
   return(
-      <div className="fixed inset-0 bg-gray-200 bg-opacity-40 backdrop-blur-md flex items-center justify-center z-50">      <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md mx-4"> 
-        <div className="flex justify-between items-center mb-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all"> 
+       <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"> 
+        <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">
             {estudianteEditar ? "Editar Estudiante" : "Registrar Estudiante"}
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl font-bold">
-            ×
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">
+           <FiX />
           </button>
         </div>
         <form onSubmit={guardar} className="space-y-4 ">
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>Registro: </label>
+            <label className='block text-sm font-medium text-gray-700 mb-2'>Registro </label>
             <input type="int" value={registro} onChange={(e) => setRegistro(e.target.value)} placeholder="Registro" required className="w-full px-4 py-2 border rounded-md" />
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>Nombre: </label>
+            <label className='block text-sm font-medium text-gray-700 mb-2'>Nombre </label>
             <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre" required className="w-full px-4 py-2 border rounded-md" />
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>Apellido: </label>
+            <label className='block text-sm font-medium text-gray-700 mb-2'>Apellido </label>
             <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} placeholder="Apellido" required className="w-full px-4 py-2 border rounded-md" />
           </div>
-          <div className='flex justify-center'>
-            <Button
-              type="submit"
-              variant="red"
-              className="w-1/2 py-2 text-white font-semibold rounded-md"
+          <div className="flex gap-x-6 gap-y-5 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
             >
-              {estudianteEditar ? "Editar" : "Guardar"}
-            </Button>
+              Cancelar
+            </button>
+            <button type="submit"
+              className="flex-1 px-5 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
+            >
+              Guardar
+            </button>
           </div>
         </form>
       </div>

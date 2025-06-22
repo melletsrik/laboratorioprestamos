@@ -1,36 +1,77 @@
-import Button from "../components/Button";
+
 import { useNavigate } from "react-router-dom";
+import { LuClipboardList } from "react-icons/lu";
+import { LuBookOpen } from "react-icons/lu";
+import { FiPackage } from "react-icons/fi";
+import { LuGraduationCap } from "react-icons/lu";
+import { LuLogOut } from "react-icons/lu";
+
 
 export default function MenuAux() {
+  const navegar = useNavigate();
 
-  const navegar=useNavigate();
+  const menuItems = [
+    {
+      icon: LuClipboardList,
+      title: "Registrar Prestamo",
+      description: "Crear nuevo prestamo de material",
+      route: "/registrar-prestamo"
+    },
+    {
+      icon: LuBookOpen,
+      title: "Prestamos activos",
+      description: "Ver materiales no devueltos",
+      route: "/prestamo-activos"
+    },
+    {
+      icon: FiPackage,
+      title: "Stock Materiales",
+      description: "Inventario y disponibilidad",
+      route: "/material"
+    },
+    {
+      icon: LuGraduationCap,
+      title: "Estudiantes",
+      description: "Registrar estudiantes",
+      route: "/registrar-estudiante"
+    }
+  ];
 
-  const handleVerStock = () => {//handle define q hacer cuando se hace clic -> onClick es el evento que se dispara al hacer clic
-    navegar("/material");
-  };
-
-  const handleRegistrarPrestamo = () => {
-    navegar("/registrar-prestamo");
-  };
- 
-  
   return (
-    <div className="flex flex-col text-white">
-      <header className="w-full size-28 flex items-center justify-center mt-10" style={{ backgroundColor: "var(--color-primary)" }}>
-        <h1 className="text-4xl font-bold text-center">MENU PARA AUXILIARES</h1>
+    <div className="bg-gray-50 min-h-screen px-7 py-6">
+      <header className="bg-red-600 shadow-md rounded-xl px-7 py-6 max-w-7xl mx-auto mb-4 text-center border border-gray-400">
+        <h1 className="text-4xl font-bold text-white tracking-wide">MENU AUXILIAR</h1>
       </header>
-      <main className="flex flex-1 items-center justify-center">
-        <div className="grid grid-cols-3 grid-rows-3 gap-14 p-10">
-          <Button onClick={handleRegistrarPrestamo}>Registrar Prestamo</Button> 
-
-          <Button>Registrar Devolucion</Button>
-
-          <Button onClick={handleVerStock}>Ver Stock Materiales</Button>
-          
-          <Button>Registrar Estudiante</Button>
-          <div />
+      <main className="max-w-7xl mx-auto py-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-9 gap-x-20">
+          {menuItems.map((item, index) => (
+            <button
+              key={index}
+              onClick={() => navegar(item.route)}
+              className="flex flex-col items-center text-center p-6 rounded-xl bg-white hover:bg-gray-50 text-gray-700 shadow-md border border-gray-300 transition hover:scale-105"
+            >
+              <div className="bg-red-100 p-3 rounded-full mb-4">
+                <item.icon size={36} className="text-red-600"></item.icon>
+              </div>
+              <span className="font-bold text-lg">{item.title}</span>
+              <p className="text-sm opacity-80">{item.description}</p>
+            </button>
+          ))}
+        </div>
+        <div className="flex justify-end mt-10">
+          <button
+            onClick={() => {
+              localStorage.clear();
+              navegar("/");
+            }}
+            className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+          >
+            <LuLogOut className="w-5 h-5"></LuLogOut>
+            Cerrar Sesion
+          </button>
         </div>
       </main>
     </div>
   );
 }
+ 

@@ -1,21 +1,41 @@
 export const Auth = {
-  // Obtener el token
+  // Cache para el token
+  tokenCache: null,
+  rolCache: null,
+
   getToken() {
-    return localStorage.getItem('token');
+    if (this.tokenCache === null) {
+      this.tokenCache = localStorage.getItem('token');
+    }
+    return this.tokenCache;
   },
 
-  // Guardar el token (cuando se inicia sesión)
-  setToken(token) {
+  getRol() {
+    if (this.rolCache === null) {
+      this.rolCache = localStorage.getItem('rol');
+    }
+    return this.rolCache;
+  },
+
+  setToken(token, rol) {
     localStorage.setItem('token', token);
+    localStorage.setItem('rol', rol);
+    this.tokenCache = token;
+    this.rolCache = rol;
   },
 
-  // Eliminar el token (cuando se cierra sesión)
   clearToken() {
     localStorage.removeItem('token');
+    localStorage.removeItem('rol');
+    this.tokenCache = null;
+    this.rolCache = null;
   },
 
-  // Verificar si hay sesión activa
   isAuthenticated() {
     return !!this.getToken();
+  },
+
+  isRol(rol) {
+    return this.getRol() === rol;
   }
 };

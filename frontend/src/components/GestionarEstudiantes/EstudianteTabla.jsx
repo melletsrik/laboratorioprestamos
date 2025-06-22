@@ -24,11 +24,10 @@ export default function EstudianteTabla({ estudiantes, onEditar }) {
               <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
                 {estudiante.apellido || estudiante.persona?.apellido}
               </td>
-              <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
+              <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-white'>
                 <Button
-                  variant="blue"
                   onClick={() => onEditar(estudiante)}
-                  className="px-1 py-0.5 rounded-md font-semibold transition-colors cursor-pointer w-full sm:w-auto"
+                  className="px-1 py-0.5 rounded-md font-semibold transition-colors cursor-pointer w-full sm:w-auto bg-gray-500 text-white"
                 >
                   Editar
                 </Button>

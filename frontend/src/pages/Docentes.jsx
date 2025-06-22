@@ -1,50 +1,54 @@
-import { useState, useEffect } from "react"; 
-import axios from 'axios';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; 
 import DocenteTabla from "../components/GestionarDocente/DocenteTabla";
 import DocenteBusqueda from "../components/GestionarDocente/DocenteBusqueda";
 import DocenteModal from "../components/GestionarDocente/DocenteModal";
 import { Auth } from "../utils/auth";
 import Button from "../components/Button";
-
-export default function Docente () {
-  // Estado para docentes
-  const [cargando, setCargando]= useState(false); //estado de carga
-  const [docentes, setDocentes] = useState([]); //estado para todos la lista docentes
-  const [modalAbierto, setModalAbierto] = useState(false); // Estado para el modal
-  const [docenteFiltrados, setDocentesFiltrados]= useState([]);//filtrara en busqueda de docentes
+import { LuLogOut } from "react-icons/lu";
+import { IoArrowBackCircleOutline } from "react-icons/io5";
+import {  FiPlus } from "react-icons/fi";
+import { LuUsers } from "react-icons/lu";
+export default function Docente() {
+  const [cargando, setCargando] = useState(false);
+  const [docentes, setDocentes] = useState([]);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [docenteFiltrados, setDocentesFiltrados] = useState([]);
   const [docenteEditar, setDocenteEditar] = useState(null);
-  const [mensaje, setMensaje] = useState(""); // mostrara mensaje de error o exito
- 
-  // Función para cambiar el estado del docente
+  const [mensaje, setMensaje] = useState("");
+  const navegar = useNavigate();
+
+  const token = Auth.getToken("token"); 
+  useEffect(() => {
+    if (!token) {
+      navegar("/");
+    }
+  }, [token, navegar]);
+
+  if (!token) return null;
+
   const EditarDocente = async (datosEditados) => {
     try {
-      const token = Auth.getToken();
-      if (!token) {
-        setMensaje('No hay sesión activa');
-        return;
-      }
-
-      // Actualizar en el backend
       const response = await axios.put(
         `http://localhost:4000/api/docentes/${datosEditados.id_docente}`,
         {
           nombre: datosEditados.nombre,
           apellido: datosEditados.apellido,
-          estado: datosEditados.estado
+          estado: datosEditados.estado,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
+          },
         }
-      }
       );
 
-      if (response.data && response.data.success) {
-      listadoDocentes();
-      setMensaje('Docente editado correctamente');
-      setModalAbierto(false);
-      setDocenteEditar(null);
+      if (response.data?.success) {
+        listadoDocentes();
+        setMensaje("Docente editado correctamente");
+        setModalAbierto(false);
+        setDocenteEditar(null);
       } else {
         throw new Error(response.data.message || "Error al editar docente");
       }
@@ -53,134 +57,147 @@ export default function Docente () {
     }
   };
 
-  // Token de autenticación
-  const token = Auth.getToken("token"); // Obtenemos el token 
-  //localStorage sirve para almacenar datos en el navegador, ej token JWT después de iniciar sesion
-  if (!token) {
-      setMensaje('No hay sesión activa');
-      return null;
-    }
-  const listadoDocentes = async ()=> {
-    setCargando(true); //mostrara q esta cargando..
+  const listadoDocentes = async () => {
+    setCargando(true);
     try {
       const response = await axios.get("http://localhost:4000/api/docentes", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (response.data && response.data.success){
+
+      if (response.data?.success) {
         setDocentes(response.data.data);
         setDocentesFiltrados(response.data.data);
-        setMensaje('Docentes cargados correctamente');
-      }else{
+        setMensaje("Docentes cargados correctamente");
+      } else {
         setDocentes([]);
         setDocentesFiltrados([]);
-        setMensaje(response.data?.message || 'No se pudieron cargar los docentes');
+        setMensaje(response.data?.message || "No se pudieron cargar los docentes");
       }
-    }catch (error){
+    } catch (error) {
       console.error("Error al cargar docentes:", error);
       setDocentes([]);
       setDocentesFiltrados([]);
-      setMensaje(error.response?.data?.message || 'No se pudieron cargar los docentes');
-    }finally {
-        setCargando(false);
+      setMensaje(error.response?.data?.message || "No se pudieron cargar los docentes");
+    } finally {
+      setCargando(false);
     }
   };
-    useEffect (() =>{
-      listadoDocentes();
-    },[]);
 
-    //Funcion para agregar docente dentro del modal
-    const AgregarDocente = async (nuevoDocente) => {
-      try {
-        const token = Auth.getToken();
-        if (!token){
-          setMensaje("No hay sesión activa"); //si no esta autenticado el usuario no puede agregar docente
-          return;
-        }
-        const response= await axios.post("http://localhost:4000/api/docentes", nuevoDocente, 
-          {
-            headers:{
-              Authorization: `Bearer ${token}`,
-          }
-          }
-        );
-        //refresca la lista de docentes
-        if (response.data && response.data.success){
-          listadoDocentes();
-          setMensaje('Docente agregado correctamente');
-        } else {
-          throw new Error(response.data.message || "Error al agregar docente");
-        }
-      }catch (error){
-        console.error("Error al agregar docente:", error.response?.data || error);
-        setMensaje(error.response?.data?.message || "Error al agregar docente");
+  useEffect(() => {
+    listadoDocentes();
+  }, []);
+
+  const AgregarDocente = async (nuevoDocente) => {
+    try {
+      const response = await axios.post("http://localhost:4000/api/docentes", nuevoDocente, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data?.success) {
+        listadoDocentes();
+        setMensaje("Docente agregado correctamente");
+      } else {
+        throw new Error(response.data.message || "Error al agregar docente");
       }
-    };
+    } catch (error) {
+      console.error("Error al agregar docente:", error);
+      setMensaje(error.response?.data?.message || "Error al agregar docente");
+    }
+  };
 
-    //funcion de busqueda
-    const buscarDocente= (terminoBusqueda) =>{
-      if(terminoBusqueda.trim () === ""){
-        setDocentesFiltrados(docentes);
-        return;
-      }else{
-        const filtrados= docentes.filter(docente => docente.persona.nombre.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
-        docente.persona.apellido.toLowerCase().includes(terminoBusqueda.toLowerCase())
+  const buscarDocente = (terminoBusqueda) => {
+    if (terminoBusqueda.trim() === "") {
+      setDocentesFiltrados(docentes);
+    } else {
+      const filtrados = docentes.filter(
+        (docente) =>
+          docente.persona.nombre.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
+          docente.persona.apellido.toLowerCase().includes(terminoBusqueda.toLowerCase())
       );
       setDocentesFiltrados(filtrados);
-      }
-    };
-    //Funcion editar docente
-    const onEditar = (docente) => {
-      setDocenteEditar(docente);
-      setModalAbierto(true);
-    };
+    }
+  };
 
-     
+  const onEditar = (docente) => {
+    setDocenteEditar(docente);
+    setModalAbierto(true);
+  };
+
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">Gestión de Docentes</h1>
-        
-        {/* Barra de búsqueda y botón agregar */}
-        <div className="flex justify-between items-center mb-4">
-          <DocenteBusqueda onBuscar={buscarDocente} />
-          <Button variant="red" onClick={() => setModalAbierto(true)} 
-            className="px-3 py-1 rounded-md font-semibold transition-colors cursor-pointer w-full sm:w-auto">
-            Agregar Docente
-          </Button>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => navegar("/menu-admin")}
+              className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
+            >
+              <IoArrowBackCircleOutline className="w-6 h-6" />
+              Volver al Menú
+            </button>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                navegar("/");
+              }}
+              className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+            >
+              <LuLogOut className="w-5 h-5" />
+              Cerrar Sesión
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Loading spinner */}
-      {cargando && (
-        <div className="flex justify-center items-center h-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
-        </div>
-      )}
+      {/* Contenido principal */}
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="mb-8">
+  <div className="flex items-center gap-2 mb-4">
+    <LuUsers className="w-6 h-6 text-red-600 " />
+    <h1 className="text-2xl font-bold">Lista de Docentes</h1>
+  </div>
+</div>
 
-      {/* Tabla de docentes */}
-      <DocenteTabla 
-        docentes={docenteFiltrados} 
-        onEditar={onEditar} 
-      />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div className="sm:w-2/3 w-full">
+              <DocenteBusqueda onBuscar={buscarDocente} />
+            </div>
+            <div className="sm:w-auto w-full">
+              <Button
+                variant="red"
+                onClick={() => setModalAbierto(true)}
+                className="w-full sm:w-auto px-6 py-2 rounded-md font-semibold transition-colors"
+              >
+                Agregar Docente
+              </Button>
+            </div>
+          </div>
+        
 
-      {/* Modal  */}
-      <DocenteModal
-        isOpen={modalAbierto}
-        onClose={() => {
-          setModalAbierto(false);
-          setDocenteEditar(null);
-        }}
-        onAgregarDocente={AgregarDocente}
-        docenteEditar={docenteEditar}
-        onEditarDocente={EditarDocente}
-      />
-      {cargando && (
-        <div className="flex justify-center items-center h-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
-        </div>
-      )}
+        {cargando && (
+          <div className="flex justify-center items-center h-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
+          </div>
+        )}
+
+        <DocenteTabla docentes={docenteFiltrados} onEditar={onEditar} />
+
+        <DocenteModal
+          isOpen={modalAbierto}
+          onClose={() => {
+            setModalAbierto(false);
+            setDocenteEditar(null);
+          }}
+          onAgregarDocente={AgregarDocente}
+          docenteEditar={docenteEditar}
+          onEditarDocente={EditarDocente}
+        />
+      </div>
     </div>
   );
-};
+}
