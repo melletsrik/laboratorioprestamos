@@ -5,6 +5,7 @@ class DocenteService {
   static async getAll() {
     try {
       const docentes = await Docente.findAll({
+        where: { estado: true }, // Solo activos
         include: {
           model: Persona,
           as: 'persona',
@@ -28,7 +29,6 @@ class DocenteService {
   static async create(dataDocente) {
     const transaction = await sequelize.transaction();
     try {
-      console.log("Datos recibidos para crear docente:", dataDocente);
       if (!dataDocente.nombre || !dataDocente.apellido) {
         return {
           success: false,
@@ -43,7 +43,7 @@ class DocenteService {
 
       const docente = await Docente.create({
         id_persona: persona.id_persona,
-        estado: dataDocente.estado !== undefined ? dataDocente.estado : 1
+        estado: dataDocente.estado !== undefined ? dataDocente.estado : true
       }, { transaction });
 
       await transaction.commit();
@@ -65,6 +65,7 @@ class DocenteService {
   static async getByName(nombreDocenteBuscado) {
     try {
       const docentes = await Docente.findAll({
+        where: { estado: true }, // Solo activos
         include: {
           model: Persona,
           as: 'persona',
@@ -75,7 +76,8 @@ class DocenteService {
             ]
           },
           attributes: ['nombre', 'apellido']
-        }
+        },
+        attributes: ['id_docente', 'estado']
       });
 
       if (docentes.length === 0) {

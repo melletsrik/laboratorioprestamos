@@ -26,9 +26,9 @@ module.exports = {
     PRESTAMO_REGISTRAR: 'prestamo:registrar',
     PRESTAMO_DEVOLUCION: 'prestamo:devolucion',
     
-    // Auxiliares
-    AUXILIAR_REGISTRAR: 'auxiliar:registrar',
-    AUXILIAR_LISTAR: 'auxiliar:listar',
+    // Usuario
+    USUARIO_REGISTRAR: 'usuario:registrar',
+    USUARIO_LISTAR: 'usuario:listar',
 
     // Materias
     MATERIA_REGISTRAR: 'materia:registrar',
@@ -36,7 +36,12 @@ module.exports = {
     MATERIA_LISTAR: 'materia:listar',
     MATERIA_BUSCAR: 'materia:buscar',
 
-
+    //pretsamo
+    PRESTAMO_REGISTRAR: 'prestamo:registrar',
+    PRESTAMO_DEVOLVER: 'prestamo:modificar',
+    PRESTAMO_LISTAR: 'prestamo:listar',
+    PRESTAMO_BUSCAR: 'prestamo:buscar',
+  
   },
   
   ROLE_PERMISSIONS: {
@@ -45,8 +50,9 @@ module.exports = {
       'estudiante:registrar', 'estudiante:modificar', 'estudiante:listar', 'estudiante:buscar',
       'docente:registrar', 'docente:listar', 'docente:modificar',
       'prestamo:registrar', 'prestamo:devolucion',
-      'auxiliar:registrar', 'auxiliar:listar',
+      'usuario:registrar', 'usuario:listar',
       'materia:registrar', 'materia:modificar','materia:listar','materia:buscar',
+      'prestamo:registrar','prestamo:modificar', 'prestamo:listar','prestamo:buscar',
     ],
     Auxiliar: [
       'material:listar', 'material:buscar',
@@ -54,6 +60,7 @@ module.exports = {
       'docente:registrar', 'docente:listar',
       'prestamo:registrar', 'prestamo:devolucion',
       'materia:registrar', 'materia:modificar','materia:listar','materia:buscar',
+      'prestamo:registrar','prestamo:modificar', 'prestamo:listar','prestamo:buscar',
     ]
   }
 };

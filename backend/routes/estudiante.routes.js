@@ -15,8 +15,8 @@
     estudianteController.getByName
   );
 
-  router.get('/', 
-    roleMiddleware([PERMISSIONS.ESTUDIANTE_REGISTRAR]),
+  router.get('/buscar/registro',
+    roleMiddleware(['buscar_estudiante']),
     estudianteController.getByRegister
   );
 

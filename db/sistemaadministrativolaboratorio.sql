@@ -35,6 +35,7 @@ CREATE TABLE Estudiante (
     id_estudiante INT AUTO_INCREMENT,
     id_persona INT NOT NULL,
     Registro VARCHAR(25) NOT NULL UNIQUE,
+    estado BOOLEAN,
     PRIMARY KEY(id_estudiante),
     FOREIGN KEY(id_persona) REFERENCES Persona(id_persona)
 );
@@ -64,6 +65,7 @@ CREATE TABLE Usuario (
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
     password_ VARCHAR(255) NOT NULL,
     id_rol INT NOT NULL,
+    estado BOOLEAN,
     PRIMARY KEY (id_usuario),
     FOREIGN KEY (id_rol) REFERENCES Rol(id_rol)
 );

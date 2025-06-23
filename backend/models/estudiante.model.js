@@ -16,11 +16,16 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         unique: true,
       },
+      estado: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
     },
     {
       tableName: "Estudiante",
       timestamps: false,
-    }
+    },
   );
 
   Estudiante.associate = function (models) {

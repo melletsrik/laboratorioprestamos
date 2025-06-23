@@ -18,10 +18,16 @@ module.exports = (sequelize, DataTypes) => {
       cantidad: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        validate: {
+          min: 1,
+        },
       },
       cantidad_devuelta: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
+        validate: {
+          min: 0,
+        },
       },
     },
     {
@@ -35,6 +41,7 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "id_prestamo",
       as: "prestamo",
     });
+    
     Detalle_Prestamo.belongsTo(models.Material, {
       foreignKey: "id_material",
       as: "material",

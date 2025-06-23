@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const { Usuario, Rol, sequelize } = require("../models");
 
 class UsuarioService {
-  static async createAuxiliar(usuarioData) {
+  static async createUsuario(usuarioData) {
     const transaction = await sequelize.transaction();
     try {
       // Validación básica
@@ -10,7 +10,8 @@ class UsuarioService {
         !usuarioData.nombre ||
         !usuarioData.apellido ||
         !usuarioData.nombre_usuario ||
-        !usuarioData.password_
+        !usuarioData.password_ ||
+        !usuarioData.estado
       ) {
         return {
           success: false,
@@ -18,14 +19,12 @@ class UsuarioService {
         };
       }
 
-      // Verificar si el rol auxiliar existe
-      const rolAuxiliar = await Rol.findOne({
-        where: { descripcion: "Auxiliar" },
-      });
-      if (!rolAuxiliar) {
+      // Verificar si el rol existe
+      const rol = await Rol.findByPk(usuarioData.id_rol, { transaction });
+      if (!rol) {
         return {
           success: false,
-          message: "Rol no configurado",
+          message: "Rol no válido",
         };
       }
 
@@ -49,7 +48,8 @@ class UsuarioService {
           apellido: usuarioData.apellido,
           nombre_usuario: usuarioData.nombre_usuario,
           password_: hashedPassword,
-          id_rol: rolAuxiliar.id_rol,
+          id_rol: usuarioData.id_rol,
+          estado: usuarioData.estado !== undefined ? usuarioData.estado : true,
         },
         { transaction }
       );
@@ -63,11 +63,11 @@ class UsuarioService {
       return {
         success: true,
         data: usuarioSinPassword,
-        message: "Auxiliar registrado",
+        message: "Usuario registrado correctamente",
       };
     } catch (error) {
       await transaction.rollback();
-      console.error("Error en UsuarioService.createAuxiliar:", error);
+      console.error("Error en UsuarioService.createUsuario:", error);
       return {
         success: false,
         message: "Error al registrar",
@@ -75,28 +75,28 @@ class UsuarioService {
     }
   }
 
-  static async getAllAuxiliares() {
+  static async getAll(filter = {}) {
     try {
-      const auxiliares = await Usuario.findAll({
+      const usuarios = await Usuario.findAll({
+        where: filter,
         include: {
           model: Rol,
           as: "rol",
-          where: { descripcion: "Auxiliar" },
-          attributes: ["descripcion"],
+          attributes: ["id_rol", "descripcion"],
         },
         attributes: { exclude: ["password_"] },
       });
 
       return {
         success: true,
-        data: auxiliares,
-        message: "Lista de auxiliares",
+        data: usuarios,
+        message: "Lista de usuarios obtenida",
       };
     } catch (error) {
-      console.error("Error en UsuarioService.getAllAuxiliares:", error);
+      console.error("Error en UsuarioService.getAll:", error);
       return {
         success: false,
-        message: "Error al obtener auxiliares",
+        message: "Error al obtener usuarios",
       };
     }
   }
