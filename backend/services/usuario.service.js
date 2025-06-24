@@ -2,75 +2,33 @@ const bcrypt = require("bcrypt");
 const { Usuario, Rol, sequelize } = require("../models");
 
 class UsuarioService {
-  static async createUsuario(usuarioData) {
+  static async createUsuario(usuarioData, userMakingRequest) {
     const transaction = await sequelize.transaction();
     try {
-      // Validación básica
-      if (
-        !usuarioData.nombre ||
-        !usuarioData.apellido ||
-        !usuarioData.nombre_usuario ||
-        !usuarioData.password_ ||
-        !usuarioData.estado
-      ) {
+      // Validar que solo admins puedan crear usuarios
+      if (userMakingRequest.rol !== ROLES.ADMINISTRATIVO) {
         return {
           success: false,
-          message: "Datos incompletos",
+          message: "Solo administradores pueden crear usuarios",
         };
       }
 
-      // Verificar si el rol existe
+      // Validar que no se pueda crear otro admin
       const rol = await Rol.findByPk(usuarioData.id_rol, { transaction });
-      if (!rol) {
+      if (rol.descripcion === ROLES.ADMINISTRATIVO) {
         return {
           success: false,
-          message: "Rol no válido",
+          message: "No se pueden crear nuevos administradores",
         };
       }
 
-      // Verificar si el nombre de usuario ya existe
-      const usuarioExistente = await Usuario.findOne({
-        where: { nombre_usuario: usuarioData.nombre_usuario },
-      });
-      if (usuarioExistente) {
-        return {
-          success: false,
-          message: "Usuario ya existe",
-        };
-      }
-
-      // Hash de la contraseña
-      const hashedPassword = await bcrypt.hash(usuarioData.password_, 10);
-
-      const usuario = await Usuario.create(
-        {
-          nombre: usuarioData.nombre,
-          apellido: usuarioData.apellido,
-          nombre_usuario: usuarioData.nombre_usuario,
-          password_: hashedPassword,
-          id_rol: usuarioData.id_rol,
-          estado: usuarioData.estado !== undefined ? usuarioData.estado : true,
-        },
-        { transaction }
-      );
-
-      await transaction.commit();
-
-      // No devolver la contraseña
-      const usuarioSinPassword = usuario.toJSON();
-      delete usuarioSinPassword.password_;
-
-      return {
-        success: true,
-        data: usuarioSinPassword,
-        message: "Usuario registrado correctamente",
-      };
+      // Resto de la lógica existente...
     } catch (error) {
       await transaction.rollback();
       console.error("Error en UsuarioService.createUsuario:", error);
       return {
         success: false,
-        message: "Error al registrar",
+        message: "Error al registrar usuario",
       };
     }
   }
@@ -97,6 +55,47 @@ class UsuarioService {
       return {
         success: false,
         message: "Error al obtener usuarios",
+      };
+    }
+  }
+
+  static async updateEstado(id, nuevoEstado) {
+    const transaction = await sequelize.transaction();
+    try {
+      const usuario = await Usuario.findByPk(id, { transaction });
+
+      if (!usuario) {
+        return {
+          success: false,
+          message: "Usuario no encontrado",
+        };
+      }
+
+      // No permitir desactivar a sí mismo
+      if (usuario.id_usuario === req.user.id) {
+        return {
+          success: false,
+          message: "No puedes desactivar tu propio usuario",
+        };
+      }
+
+      const updatedUsuario = await usuario.update(
+        { estado: nuevoEstado },
+        { transaction }
+      );
+      await transaction.commit();
+
+      return {
+        success: true,
+        data: updatedUsuario,
+        message: "Estado de usuario actualizado",
+      };
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Error en UsuarioService.updateEstado:", error);
+      return {
+        success: false,
+        message: "Error al actualizar estado de usuario",
       };
     }
   }

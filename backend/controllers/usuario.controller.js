@@ -36,3 +36,46 @@ exports.getAll = async (req, res) => {
     });
   }
 };
+
+// Agregar este nuevo método
+exports.updateEstado = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body;
+    
+    if (typeof estado !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: "Estado debe ser true o false"
+      });
+    }
+
+    const usuario = await Usuario.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado"
+      });
+    }
+
+    // No permitir desactivarse a sí mismo
+    if (usuario.id_usuario === req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "No puedes desactivar tu propio usuario"
+      });
+    }
+
+    await usuario.update({ estado });
+    
+    return res.status(200).json({
+      success: true,
+      message: "Estado de usuario actualizado"
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error del servidor"
+    });
+  }
+};

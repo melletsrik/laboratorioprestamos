@@ -5,13 +5,12 @@ class EstudianteService {
   static async getAll() {
     try {
       const estudiantes = await Estudiante.findAll({
-        where: { estado: true }, // Solo activos
         include: {
           model: Persona,
           as: "persona",
           attributes: ["nombre", "apellido"],
         },
-        attributes: ["id_estudiante", "Registro", "estado"],
+        attributes: ["id_estudiante", "Registro"],
       });
       return {
         success: true,
@@ -65,7 +64,6 @@ class EstudianteService {
         {
           id_persona: persona.id_persona,
           Registro: dataEstudiante.registro,
-          estado: dataEstudiante.estado !== undefined ? dataEstudiante.estado : true,
         },
         { transaction }
       );
@@ -90,7 +88,6 @@ class EstudianteService {
   static async getByName(nameEstudiante) {
     try {
       const estudiantes = await Estudiante.findAll({
-        where: { estado: true }, // Solo activos
         include: {
           model: Persona,
           as: "persona",
@@ -100,9 +97,7 @@ class EstudianteService {
               { apellido: { [Op.like]: `%${nameEstudiante}%` } },
             ],
           },
-          attributes: ["nombre", "apellido"],
         },
-        attributes: ["id_estudiante", "Registro", "estado"],  
       });
 
       if (estudiantes.length === 0) {
@@ -133,7 +128,6 @@ class EstudianteService {
           model: Persona,
           as: "persona",
         },
-        transaction
       });
 
       if (!estudiante) {
@@ -143,15 +137,14 @@ class EstudianteService {
         };
       }
 
-      // Preparar datos de actualización
-      const updateEstudiante = {};
-      const updatePersona = {};
-
-      // Solo actualizar registro si es diferente y no existe
-      if (dataEstudiante.registro && dataEstudiante.registro !== estudiante.Registro) {
+      // Verificar si se está cambiando el registro y si ya existe
+      if (
+        dataEstudiante.registro &&
+        dataEstudiante.registro !== estudiante.Registro
+      ) {
         const existeRegistro = await Estudiante.findOne({
           where: { Registro: dataEstudiante.registro },
-          transaction
+          transaction,
         });
 
         if (existeRegistro) {
@@ -160,29 +153,24 @@ class EstudianteService {
             message: "El registro ya está en uso",
           };
         }
-        updateEstudiante.Registro = dataEstudiante.registro;
       }
 
-      // Actualizar estado si viene en los datos
-      if (typeof dataEstudiante.estado !== 'undefined') {
-        updateEstudiante.estado = dataEstudiante.estado;
-      }
+      // Actualizar datos de persona
+      await estudiante.persona.update(
+        {
+          nombre: dataEstudiante.nombre || estudiante.persona.nombre,
+          apellido: dataEstudiante.apellido || estudiante.persona.apellido,
+        },
+        { transaction }
+      );
 
-      // Actualizar datos de persona si vienen en los datos
-      if (dataEstudiante.nombre) {
-        updatePersona.nombre = dataEstudiante.nombre;
-      }
-      if (dataEstudiante.apellido) {
-        updatePersona.apellido = dataEstudiante.apellido;
-      }
-
-      // Realizar actualizaciones solo si hay cambios
-      if (Object.keys(updatePersona).length > 0) {
-        await estudiante.persona.update(updatePersona, { transaction });
-      }
-      if (Object.keys(updateEstudiante).length > 0) {
-        await estudiante.update(updateEstudiante, { transaction });
-      }
+      // Actualizar datos de estudiante
+      await estudiante.update(
+        {
+          Registro: dataEstudiante.registro || estudiante.Registro,
+        },
+        { transaction }
+      );
 
       await transaction.commit();
 
@@ -210,7 +198,7 @@ class EstudianteService {
           as: "persona",
           attributes: ["nombre", "apellido"],
         },
-        attributes: ["id_estudiante", "Registro", "estado"],
+        attributes: ["id_estudiante", "Registro"],
       });
 
       if (!estudiante) {

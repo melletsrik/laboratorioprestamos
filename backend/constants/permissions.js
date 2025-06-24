@@ -38,7 +38,7 @@ module.exports = {
 
     //pretsamo
     PRESTAMO_REGISTRAR: 'prestamo:registrar',
-    PRESTAMO_DEVOLVER: 'prestamo:modificar',
+    PRESTAMO_MODIFICAR: 'prestamo:modificar', //maneja la devolucion
     PRESTAMO_LISTAR: 'prestamo:listar',
     PRESTAMO_BUSCAR: 'prestamo:buscar',
   

@@ -30,6 +30,14 @@ module.exports = async (req, res, next) => {
       });
     }
 
+    // Verificar que el usuario esté activo
+    if (!usuario.estado) {
+      return res.status(403).json({
+        success: false,
+        error: 'Usuario inactivo'
+      });
+    }
+
     // Verificar que el rol sea válido
     if (!Object.values(ROLES).includes(usuario.rol.descripcion)) {
       return res.status(403).json({

@@ -7,7 +7,10 @@ class AuthService {
   static async login(nombreUsuario, password) {
     try {
       const usuario = await Usuario.findOne({ 
-        where: { nombre_usuario: nombreUsuario },
+        where: { 
+          nombre_usuario: nombreUsuario,
+          estado: true // Solo usuarios activos pueden iniciar sesión
+        },
         include: [{
           model: Rol,
           as: 'rol'
@@ -15,7 +18,7 @@ class AuthService {
       });
       
       if (!usuario) {
-        throw new Error('Usuario no encontrado');
+        throw new Error('Usuario no encontrado o inactivo');
       }
 
       const match = await bcrypt.compare(password, usuario.password_);

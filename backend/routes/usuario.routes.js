@@ -6,13 +6,18 @@ const { PERMISSIONS } = require('../constants/permissions');
 
 // Rutas protegidas para administradores
 router.post('/',
-  permissionMiddleware([PERMISSIONS.AUXILIAR_REGISTRAR]),
-  usuarioController.createAuxiliar
+  permissionMiddleware([PERMISSIONS.USUARIO_REGISTRAR]),
+  usuarioController.createUsuario
 );
 
 router.get('/',
-  permissionMiddleware([PERMISSIONS.AUXILIAR_LISTAR]),
-  usuarioController.getAllAuxiliares
+  permissionMiddleware([PERMISSIONS.USUARIO_LISTAR]),
+  usuarioController.getAll
+);
+
+router.put('/:id/estado',
+  permissionMiddleware([PERMISSIONS.USUARIO_MODIFICAR]),
+  usuarioController.updateEstado
 );
 
 module.exports = router;

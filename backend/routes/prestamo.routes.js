@@ -4,24 +4,14 @@ const prestamoController = require('../controllers/prestamo.controller');
 const permissionMiddleware = require('../middlewares/permission.middleware');
 const { PERMISSIONS } = require('../constants/permissions');
 
-router.get('/',
+router.get('/', 
   permissionMiddleware([PERMISSIONS.PRESTAMO_LISTAR]),
   prestamoController.getAll
 );
 
-router.get('/activos',
+router.get('/estudiante/:registro',
   permissionMiddleware([PERMISSIONS.PRESTAMO_LISTAR]),
-  prestamoController.getActivos
-);
-
-router.get('/estudiante/:idEstudiante',
-  permissionMiddleware([PERMISSIONS.PRESTAMO_BUSCAR]),
-  prestamoController.getByEstudiante
-);
-
-router.get('/material/:idMaterial',
-  permissionMiddleware([PERMISSIONS.PRESTAMO_BUSCAR]),
-  prestamoController.getByMaterial
+  prestamoController.getByStudent
 );
 
 router.get('/:id',
@@ -29,14 +19,15 @@ router.get('/:id',
   prestamoController.getById
 );
 
+// Rutas para registrar y actualizar
 router.post('/',
   permissionMiddleware([PERMISSIONS.PRESTAMO_REGISTRAR]),
   prestamoController.create
 );
 
-router.put('/:id/devolucion',
-  permissionMiddleware([PERMISSIONS.PRESTAMO_DEVOLVER]),
-  prestamoController.registrarDevolucion
+router.put('/:id',
+  permissionMiddleware([PERMISSIONS.PRESTAMO_MODIFICAR]),
+  prestamoController.update
 );
 
 module.exports = router;
