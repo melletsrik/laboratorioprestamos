@@ -1,4 +1,4 @@
-const { Estudiante, Persona, sequelize } = require("../models");
+const { Estudiante, Persona,Estudiante_Materia, Docente_Materia, sequelize} = require("../models");
 const { Op } = require("sequelize");
 
 class EstudianteService {
@@ -219,6 +219,137 @@ class EstudianteService {
         success: false,
         message: "Error al buscar estudiante",
       };
+    }
+  }
+
+  static async addMateria(idEstudiante, idDocenteMateria, modulo, semestre) {
+    const transaction = await sequelize.transaction();
+    try {
+        // 1. Validar que el estudiante existe
+        const estudiante = await Estudiante.findByPk(idEstudiante, { 
+            transaction,
+            include: [{
+                model: Persona,
+                as: 'persona'
+            }]
+        });
+        
+        if (!estudiante) {
+            await transaction.rollback();
+            return { 
+                success: false, 
+                message: `El estudiante con ID ${idEstudiante} no existe` 
+            };
+        }
+
+        // 2. Validar que la relación docente-materia existe
+        const docenteMateria = await Docente_Materia.findByPk(idDocenteMateria, {
+            transaction,
+            include: ['docente', 'materia']
+        });
+        
+        if (!docenteMateria) {
+            await transaction.rollback();
+            return { 
+                success: false, 
+                message: `La relación docente-materia con ID ${idDocenteMateria} no existe` 
+            };
+        }
+
+        // 3. Verificar si ya está inscrito
+        const existeInscripcion = await Estudiante_Materia.findOne({
+            where: {
+                id_estudiante: idEstudiante,
+                id_docente_materia: idDocenteMateria,
+                id_modulo: modulo
+            },
+            transaction
+        });
+
+        if (existeInscripcion) {
+            await transaction.rollback();
+            return { 
+                success: false, 
+                message: `El estudiante ya está inscrito en esta materia para el módulo ${modulo}` 
+            };
+        }
+
+        // 4. Crear la nueva inscripción
+        const nuevaInscripcion = await Estudiante_Materia.create({
+            id_estudiante: idEstudiante,
+            id_docente_materia: idDocenteMateria,
+            id_modulo: modulo,
+            id_semestre: semestre
+        }, { transaction });
+
+        await transaction.commit();
+
+        // 5. Preparar respuesta detallada
+        return {
+            success: true,
+            data: {
+                inscripcionId: nuevaInscripcion.id_estudiantes_materia,
+                estudiante: {
+                    id: estudiante.id_estudiante,
+                    registro: estudiante.Registro,
+                    nombre: estudiante.persona.nombre,
+                    apellido: estudiante.persona.apellido
+                },
+                materia: {
+                    id: docenteMateria.materia.id_materia,
+                    nombre: docenteMateria.materia.nombre
+                },
+                docente: {
+                    id: docenteMateria.docente.id_docente,
+                    nombre: docenteMateria.docente.persona?.nombre,
+                    apellido: docenteMateria.docente.persona?.apellido
+                },
+                modulo,
+                semestre
+            },
+            message: "Materia agregada correctamente al estudiante"
+        };
+
+    } catch (error) {
+        await transaction.rollback();
+        console.error("Error detallado en addMateria:", error);
+        
+        return {
+            success: false,
+            message: "Error al agregar materia",
+            error: process.env.NODE_ENV === 'development' ? {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            } : undefined
+        };
+    }
+}
+
+  static async getMaterias(idEstudiante) {
+    try {
+      const estudiante = await Estudiante.findByPk(idEstudiante, {
+        include: [
+          {
+            model: Estudiante_Materia,
+            as: "materias",
+            include: ["docente_materia"],
+          },
+        ],
+      });
+
+      if (!estudiante) {
+        return { success: false, message: "Estudiante no encontrado" };
+      }
+
+      return {
+        success: true,
+        data: estudiante.materias,
+        message: "Materias del estudiante obtenidas",
+      };
+    } catch (error) {
+      console.error("Error en EstudianteService.getMaterias:", error);
+      return { success: false, message: "Error al obtener materias" };
     }
   }
 }

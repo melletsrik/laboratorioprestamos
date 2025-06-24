@@ -84,3 +84,52 @@ exports.getByRegister = async (req, res) => {
     });
   }
 };
+
+exports.addMateria = async (req, res) => {
+    try {
+        const { idDocenteMateria, modulo, semestre } = req.body;
+        
+        // Validación más estricta
+        if (!idDocenteMateria || !modulo || !semestre) {
+            return res.status(400).json({
+                success: false,
+                message: "Todos los campos son requeridos: idDocenteMateria, modulo, semestre",
+                details: {
+                    recibido: req.body,
+                    requerido: {
+                        idDocenteMateria: "number",
+                        modulo: "number (1-12)",
+                        semestre: "number (ej. 2023)"
+                    }
+                }
+            });
+        }
+
+        const result = await EstudianteService.addMateria(
+            req.params.id, 
+            idDocenteMateria, 
+            modulo, 
+            semestre
+        );
+        
+        res.status(result.success ? 200 : 400).json(result);
+    } catch (error) {
+        console.error("Error en controller addMateria:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error interno del servidor al procesar la solicitud",
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+exports.getMaterias = async (req, res) => {
+    try {
+        const result = await EstudianteService.getMaterias(req.params.id);
+        res.status(result.success ? 200 : 404).json(result);
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error del servidor"
+        });
+    }
+};

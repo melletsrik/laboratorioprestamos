@@ -15,12 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(25),
         allowNull: false,
         unique: true,
-      },
-      estado: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
+      }
     },
     {
       tableName: "Estudiante",
