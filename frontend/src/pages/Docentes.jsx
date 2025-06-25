@@ -5,6 +5,7 @@ import DocenteBusqueda from "../components/GestionarDocente/DocenteBusqueda";
 import DocenteModal from "../components/GestionarDocente/DocenteModal";
 import { Auth } from "../utils/auth";
 import Button from "../components/Button";
+import axios from 'axios';
 import { LuLogOut } from "react-icons/lu";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import {  FiPlus } from "react-icons/fi";
@@ -39,7 +40,7 @@ export default function Docente() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         }
       );
@@ -94,6 +95,7 @@ export default function Docente() {
       const response = await axios.post("http://localhost:4000/api/docentes", nuevoDocente, {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
       });
 

@@ -27,7 +27,7 @@ const token = Auth.getToken("token");
  const cargarUsuarios = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("http://localhost:4000/api/auxiliares", {
+      const response = await axios.get("http://localhost:4000/api/usuarios", {
         headers: {
           Authorization: `Bearer ${token}`,
         }
@@ -76,11 +76,12 @@ const AgregarUsuario = async (nuevoUsuario) => {
     }
 
     const response = await axios.post(
-      "http://localhost:4000/api/auxiliares",
+      "http://localhost:4000/api/usuarios",
       nuevoUsuario,
       {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       }
     );
@@ -109,11 +110,12 @@ const cambiarEstado = async (idUsuario, nuevoEstado) => {
       return;
     }
 //lo q espera del backend
-    const response = await axios.put(`http://localhost:4000/api/auxiliares/${idUsuario}/estado`,
+    const response = await axios.put(`http://localhost:4000/api/usuarios/${idUsuario}/estado`,
       { estado: nuevoEstado },
       {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       }
     );

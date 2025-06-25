@@ -60,7 +60,7 @@ export default function UsuariosTabla({ usuarios = [] , onCambiarEstado}) {
               </td>
               <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
                 <div className='flex items-center gap-2'>
-                <button onClick={() => onCambiarEstado(usuario.id, !usuario.estado)} className={`px-2 py-1 text-sm rounded ${usuario.estado ? 'bg-gray-500' : 'bg-red-500'} text-white`} >
+                <button onClick={() => onCambiarEstado(usuario.id_usuario, !usuario.estado)} className={`px-2 py-1 text-sm rounded ${usuario.estado ? 'bg-gray-500' : 'bg-red-500'} text-white`} >
                 {usuario.estado ? "Deshabilitado" : "Habilitado"}
                 </button>
                 </div>
