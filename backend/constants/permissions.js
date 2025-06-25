@@ -29,6 +29,7 @@ module.exports = {
     // Usuario
     USUARIO_REGISTRAR: 'usuario:registrar',
     USUARIO_LISTAR: 'usuario:listar',
+    USUARIO_MODIFICAR: 'usuario:modificar',
 
     // Materias
     MATERIA_REGISTRAR: 'materia:registrar',
@@ -50,7 +51,7 @@ module.exports = {
       'estudiante:registrar', 'estudiante:modificar', 'estudiante:listar', 'estudiante:buscar',
       'docente:registrar', 'docente:listar', 'docente:modificar',
       'prestamo:registrar', 'prestamo:devolucion',
-      'usuario:registrar', 'usuario:listar',
+      'usuario:registrar', 'usuario:listar', 'usuario:modificar',
       'materia:registrar', 'materia:modificar','materia:listar','materia:buscar',
       'prestamo:registrar','prestamo:modificar', 'prestamo:listar','prestamo:buscar',
     ],
