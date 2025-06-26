@@ -13,11 +13,6 @@ const db = {
   Facultad: require("./facultad.model")(sequelize, DataTypes),
   Carrera: require("./carrera.model")(sequelize, DataTypes),
   Materia: require("./materia.model")(sequelize, DataTypes),
-  Docente_Materia: require("./docente_materia.model")(sequelize, DataTypes),
-  Estudiante_Materia: require("./estudiante_materia.model")(
-    sequelize,
-    DataTypes
-  ),
   Estado_Prestamo: require("./estado_prestamo.model")(sequelize, DataTypes),
   Material: require("./material.model")(sequelize, DataTypes),
   Prestamo: require("./prestamo.model")(sequelize, DataTypes),
@@ -42,14 +37,6 @@ const initializeDatabase = async () => {
     // console.log('✅ Modelos actualizados (modo alter)');
   } catch (error) {
     console.error("❌ Error de sincronización:", error);
-
-    // Solución específica para el error de índices
-    if (error.original && error.original.code === "ER_TOO_MANY_KEYS") {
-      console.warn("⚠️  Solucionando error de demasiados índices...");
-      await sequelize.query("DROP INDEX nombre_usuario ON Usuario");
-      await sequelize.sync();
-      console.log("✅ Problema de índices resuelto");
-    }
   }
 };
 
