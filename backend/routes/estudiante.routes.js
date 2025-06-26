@@ -33,16 +33,4 @@ router.put('/:id',
   permissionMiddleware([PERMISSIONS.ESTUDIANTE_MODIFICAR]),
   estudianteController.update
 );
-
-// Gestionar materias del estudiante
-router.post('/:id/materias',
-  permissionMiddleware([PERMISSIONS.ESTUDIANTE_MODIFICAR]),
-  estudianteController.addMateria
-);
-
-router.get('/:id/materias',
-  permissionMiddleware([PERMISSIONS.ESTUDIANTE_BUSCAR]),
-  estudianteController.getMaterias
-);
-
 module.exports = router;

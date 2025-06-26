@@ -1,5 +1,4 @@
-const { Prestamo,Detalle_Prestamo, Material,Estudiante_Materia,Usuario, Estado_Prestamo,sequelize,
-} = require("../models");
+const { Prestamo, Detalle_Prestamo, Material, Estudiante, Docente, Materia, Usuario, Estado_Prestamo, sequelize } = require("../models");
 const { Op } = require("sequelize");
 
 class PrestamoService {
@@ -8,17 +7,38 @@ class PrestamoService {
       const prestamos = await Prestamo.findAll({
         include: [
           {
-            model: Estudiante_Materia,
-            as: "estudiante_materia",
-            include: ["estudiante", "docente_materia"],
+            model: Estudiante,
+            as: "estudiante",
+            include: ["persona"]
           },
-          { model: Usuario, as: "usuario_entrega" },
-          { model: Usuario, as: "usuario_recibe" },
-          { model: Estado_Prestamo, as: "estado" },
+          {
+            model: Docente,
+            as: "docente",
+            include: ["persona"]
+          },
+          {
+            model: Materia,
+            as: "materia"
+          },
+          { 
+            model: Usuario, 
+            as: "usuarioEntrega" 
+          },
+          { 
+            model: Usuario, 
+            as: "usuarioRecibe" 
+          },
+          { 
+            model: Estado_Prestamo, 
+            as: "estado" 
+          },
           {
             model: Detalle_Prestamo,
             as: "detalles",
-            include: [{ model: Material, as: "material" }],
+            include: [{ 
+              model: Material, 
+              as: "material" 
+            }],
           },
         ],
         order: [["fecha_prestamo", "DESC"]],
@@ -43,17 +63,38 @@ class PrestamoService {
       const prestamo = await Prestamo.findByPk(id, {
         include: [
           {
-            model: Estudiante_Materia,
-            as: "estudiante_materia",
-            include: ["estudiante", "docente_materia"],
+            model: Estudiante,
+            as: "estudiante",
+            include: ["persona"]
           },
-          { model: Usuario, as: "usuario_entrega" },
-          { model: Usuario, as: "usuario_recibe" },
-          { model: Estado_Prestamo, as: "estado" },
+          {
+            model: Docente,
+            as: "docente",
+            include: ["persona"]
+          },
+          {
+            model: Materia,
+            as: "materia"
+          },
+          { 
+            model: Usuario, 
+            as: "usuarioEntrega" 
+          },
+          { 
+            model: Usuario, 
+            as: "usuarioRecibe" 
+          },
+          { 
+            model: Estado_Prestamo, 
+            as: "estado" 
+          },
           {
             model: Detalle_Prestamo,
             as: "detalles",
-            include: [{ model: Material, as: "material" }],
+            include: [{ 
+              model: Material, 
+              as: "material" 
+            }],
           },
         ],
       });
@@ -84,10 +125,12 @@ class PrestamoService {
     try {
       // Validación básica
       if (
-        !prestamoData.id_estudiantes_materia ||
+        !prestamoData.id_estudiante ||
         !prestamoData.id_usuario_entrega ||
         !prestamoData.fecha_prestamo ||
-        !prestamoData.id_estado
+        !prestamoData.id_estado ||
+        !prestamoData.id_modulo ||
+        !prestamoData.id_semestre
       ) {
         return {
           success: false,
@@ -106,13 +149,17 @@ class PrestamoService {
       // Crear préstamo
       const nuevoPrestamo = await Prestamo.create(
         {
-          id_estudiantes_materia: prestamoData.id_estudiantes_materia,
+          id_estudiante: prestamoData.id_estudiante,
+          id_docente: prestamoData.id_docente || null,
+          id_materia: prestamoData.id_materia || null,
           id_usuario_entrega: prestamoData.id_usuario_entrega,
           id_usuario_recibe: prestamoData.id_usuario_recibe || null,
           fecha_prestamo: prestamoData.fecha_prestamo,
           fecha_devolucion: prestamoData.fecha_devolucion || null,
-          observaciones: prestamoData.observaciones || null,
+          id_modulo: prestamoData.id_modulo,
+          id_semestre: prestamoData.id_semestre,
           id_estado: prestamoData.id_estado,
+          observaciones: prestamoData.observaciones || null,
         },
         { transaction }
       );
@@ -129,6 +176,12 @@ class PrestamoService {
               `Material no disponible o cantidad insuficiente: ${detalle.id_material}`
             );
           }
+
+          // Actualizar cantidad disponible
+          await material.decrement('cantidad_total', {
+            by: detalle.cantidad,
+            transaction
+          });
 
           // Crear detalle
           return Detalle_Prestamo.create(
@@ -165,23 +218,39 @@ class PrestamoService {
       const prestamos = await Prestamo.findAll({
         include: [
           {
-            model: Estudiante_Materia,
-            as: "estudiante_materia",
-            include: [
-              {
-                association: "estudiante",
-                where: { Registro: registroEstudiante },
-              },
-              "docente_materia",
-            ],
+            model: Estudiante,
+            as: "estudiante",
+            where: { Registro: registroEstudiante },
+            include: ["persona"]
           },
-          { model: Usuario, as: "usuario_entrega" },
-          { model: Usuario, as: "usuario_recibe" },
-          { model: Estado_Prestamo, as: "estado" },
+          {
+            model: Docente,
+            as: "docente",
+            include: ["persona"]
+          },
+          {
+            model: Materia,
+            as: "materia"
+          },
+          { 
+            model: Usuario, 
+            as: "usuarioEntrega" 
+          },
+          { 
+            model: Usuario, 
+            as: "usuarioRecibe" 
+          },
+          { 
+            model: Estado_Prestamo, 
+            as: "estado" 
+          },
           {
             model: Detalle_Prestamo,
             as: "detalles",
-            include: [{ model: Material, as: "material" }],
+            include: [{ 
+              model: Material, 
+              as: "material" 
+            }],
           },
         ],
         order: [["fecha_prestamo", "DESC"]],
@@ -215,7 +284,16 @@ class PrestamoService {
         }
 
         // Solo permitir actualización de campos no críticos
-        const updatedPrestamo = await prestamo.update(updateData, { transaction });
+        const camposPermitidos = ['observaciones', 'id_estado'];
+        const datosActualizacion = {};
+        
+        camposPermitidos.forEach(campo => {
+            if (updateData[campo] !== undefined) {
+                datosActualizacion[campo] = updateData[campo];
+            }
+        });
+
+        const updatedPrestamo = await prestamo.update(datosActualizacion, { transaction });
         
         await transaction.commit();
         return {
@@ -231,9 +309,9 @@ class PrestamoService {
             message: "Error al actualizar préstamo"
         };
     }
-}
+  }
 
-static async registrarDevolucion(idPrestamo, devolucionData) {
+  static async registrarDevolucion(idPrestamo, devolucionData) {
     const transaction = await sequelize.transaction();
     try {
         const prestamo = await Prestamo.findByPk(idPrestamo, {
@@ -265,6 +343,8 @@ static async registrarDevolucion(idPrestamo, devolucionData) {
                     throw new Error(`Cantidad devuelta excede lo prestado (${detallePrestamo.cantidad})`);
                 }
 
+                // Actualizar cantidad devuelta
+                const cantidadADevolver = detalle.cantidad_devuelta - detallePrestamo.cantidad_devuelta;
                 await detallePrestamo.update({
                     cantidad_devuelta: detalle.cantidad_devuelta
                 }, { transaction });
@@ -273,16 +353,25 @@ static async registrarDevolucion(idPrestamo, devolucionData) {
                 const material = await Material.findByPk(detallePrestamo.id_material, { transaction });
                 if (material) {
                     await material.increment('cantidad_total', {
-                        by: detalle.cantidad_devuelta,
+                        by: cantidadADevolver,
                         transaction
                     });
                 }
             })
         );
 
-        // 2. Marcar préstamo como devuelto
+        // 2. Verificar si todos los materiales fueron devueltos
+        const detalles = await Detalle_Prestamo.findAll({
+            where: { id_prestamo: idPrestamo },
+            transaction
+        });
+
+        const todosDevueltos = detalles.every(d => d.cantidad_devuelta === d.cantidad);
+        const estado = todosDevueltos ? 3 : 2; // 3 = Devuelto, 2 = Parcial
+
+        // 3. Actualizar préstamo
         const prestamoActualizado = await prestamo.update({
-            id_estado: 2, // Estado "Devuelto"
+            id_estado: estado,
             id_usuario_recibe: devolucionData.id_usuario_recibe,
             fecha_devolucion: new Date()
         }, { transaction });
@@ -302,7 +391,7 @@ static async registrarDevolucion(idPrestamo, devolucionData) {
             message: error.message || "Error al registrar devolución"
         };
     }
-}
+  }
 }
 
 module.exports = PrestamoService;

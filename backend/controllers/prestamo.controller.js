@@ -26,17 +26,19 @@ exports.getById = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    // Validación básica
+    // Validación básica con los nuevos campos requeridos
     if (
-      !req.body.id_estudiantes_materia ||
+      !req.body.id_estudiante ||
       !req.body.id_usuario_entrega ||
       !req.body.fecha_prestamo ||
       !req.body.id_estado ||
+      !req.body.id_modulo ||
+      !req.body.id_semestre ||
       !req.body.detalles
     ) {
       return res.status(400).json({
         success: false,
-        message: "Datos incompletos para crear préstamo",
+        message: "Datos incompletos para crear préstamo. Se requieren: id_estudiante, id_usuario_entrega, fecha_prestamo, id_estado, id_modulo, id_semestre y detalles",
       });
     }
 
@@ -45,7 +47,7 @@ exports.create = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error del servidor al crear préstamo",
+      message: "Error del servidor al crear préstamo: " + error.message,
     });
   }
 };
@@ -64,42 +66,11 @@ exports.getByStudent = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error del servidor al buscar préstamos del estudiante",
+      message: "Error del servidor al buscar préstamos del estudiante: " + error.message,
     });
   }
-  exports.registrarDevolucion = async (req, res) => {
-    try {
-      // Validación básica
-      if (!req.body.id_usuario_recibe || !req.body.detalles) {
-        return res.status(400).json({
-          success: false,
-          message: "Datos incompletos para registrar devolución",
-        });
-      }
-
-      // Preparar datos para la devolución
-      const datosDevolucion = {
-        id_estado: 2, // ID del estado "Devuelto"
-        id_usuario_recibe: req.body.id_usuario_recibe,
-        fecha_devolucion: new Date(),
-        detalles: req.body.detalles,
-      };
-
-      const result = await PrestamoService.registrarDevolucion(
-        req.params.id,
-        datosDevolucion
-      );
-      res.status(result.success ? 200 : 400).json(result);
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: "Error del servidor al registrar devolución",
-      });
-    }
-  };
 };
 
-// Mantenemos el update para cambios generales
 exports.update = async (req, res) => {
   try {
     // Campos permitidos para actualización general
@@ -112,23 +83,57 @@ exports.update = async (req, res) => {
       }
     });
 
+    // Validar que al menos un campo fue proporcionado
+    if (Object.keys(datosActualizacion).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Se requiere al menos uno de los siguientes campos: observaciones, id_estado"
+      });
+    }
+
     const result = await PrestamoService.update(req.params.id, datosActualizacion);
     res.status(result.success ? 200 : 400).json(result);
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error del servidor al actualizar préstamo"
+      message: "Error del servidor al actualizar préstamo: " + error.message
     });
   }
 };
 
-// Método específico para devoluciones
 exports.registrarDevolucion = async (req, res) => {
   try {
+    // Validación más completa
     if (!req.body.id_usuario_recibe || !req.body.detalles) {
       return res.status(400).json({
         success: false,
-        message: "Datos incompletos: id_usuario_recibe y detalles son requeridos"
+        message: "Datos incompletos. Se requieren: id_usuario_recibe y detalles",
+        detalles: {
+          recibido: req.body,
+          requerido: {
+            id_usuario_recibe: "number (ID del usuario que recibe)",
+            detalles: "array de objetos con id_detalle_prestamo y cantidad_devuelta"
+          }
+        }
+      });
+    }
+
+    // Validar estructura de los detalles (aquí estaba el error de sintaxis)
+    if (!Array.isArray(req.body.detalles)) {
+      return res.status(400).json({
+        success: false,
+        message: "El campo detalles debe ser un array"
+      });
+    }
+
+    const detallesValidos = req.body.detalles.every(d => 
+      d.id_detalle_prestamo && d.cantidad_devuelta !== undefined
+    );
+
+    if (!detallesValidos) {
+      return res.status(400).json({
+        success: false,
+        message: "Cada detalle debe tener id_detalle_prestamo y cantidad_devuelta"
       });
     }
 
@@ -144,7 +149,8 @@ exports.registrarDevolucion = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error del servidor al registrar devolución"
+      message: "Error del servidor al registrar devolución: " + error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
