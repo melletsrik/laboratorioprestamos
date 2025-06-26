@@ -9,6 +9,7 @@ import GestionarMaterial from "./pages/GestionarMaterial";
 import Docente from "./pages/Docentes";
 import VentanaUsuario from "./pages/VentanaUsuario";
 import VentanaMateria from "./pages/VentanaMateria";
+import ReportePrestamo from "./pages/ReportePrestamo";
 import React from "react";
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route path="/docentes" element={<Docente />} />
         <Route path= "/VentanaUsuario" element={<VentanaUsuario />} />
         <Route path="/VentanaMateria" element={<VentanaMateria/>} />
+         <Route path="/ReportePrestamo" element={<ReportePrestamo/>} />
       </Routes>
     </BrowserRouter>
   );
