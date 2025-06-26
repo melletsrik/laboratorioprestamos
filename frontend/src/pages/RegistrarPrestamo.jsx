@@ -12,8 +12,6 @@ export default function RegistroPrestamo() {
     apellidos: "",
     asistente_entrega: "",
     asistente_recepcion: "",
-    materia: "",
-    modulo: "",
     descripcion: "",
     id_estado: "1",
   });
@@ -29,11 +27,16 @@ export default function RegistroPrestamo() {
   const [fechaHoraActual, setFechaHoraActual] = useState("");
   const [codigoEscaneado, setCodigoEscaneado] = useState("");
   const [estudianteNoEncontrado, setEstudianteNoEncontrado] = useState(false);
-  const [idEstudiantesMateria, setIdEstudiantesMateria] = useState(null);
+  const [idEstudiante, setIdEstudiante] = useState(null);
+  const [idEstudiantesMateria, setIdEstudiantesMateria] = useState("");
   const [inscripciones, setInscripciones] = useState([]);
-  const [idDocenteMateriaSeleccionado, setIdDocenteMateriaSeleccionado] = useState(null);
-  const [moduloSeleccionado, setModuloSeleccionado] = useState(null);
-  const [semestreSeleccionado, setSemestreSeleccionado] = useState(null);
+  const [moduloSeleccionado, setModuloSeleccionado] = useState("");
+  const [semestreSeleccionado, setSemestreSeleccionado] = useState("");
+
+  // Agrega estos estados para materia, módulo y semestre seleccionados
+  const [idMateriaSeleccionada, setIdMateriaSeleccionada] = useState("");
+  const [idModuloSeleccionado, setIdModuloSeleccionado] = useState("");
+  const [idSemestreSeleccionado, setIdSemestreSeleccionado] = useState("");
 
   // Fecha y hora actual
   useEffect(() => {
@@ -50,28 +53,13 @@ export default function RegistroPrestamo() {
     });
     const data = await res.json();
     if (data.success && data.data) {
-      return data.data; // { id_estudiante, persona: { nombre, apellido, ... } }
+      return data.data;
     }
     return null;
   }
 
-  async function obtenerInscripciones(id_estudiante) {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`http://localhost:4000/api/estudiantes/${id_estudiante}/materias`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (data.success && data.data) {
-      return data.data; // Array de inscripciones
-    }
-    return [];
-  }
 
-  const inscripcion = inscripciones.find(m =>
-    m.id_docente_materia === idDocenteMateriaSeleccionado &&
-    m.id_modulo === moduloSeleccionado &&
-    m.id_semestre === semestreSeleccionado
-  );
+
   // Autocompletar nombres y apellidos al cambiar el registro
   useEffect(() => {
     if (form.registro) {
@@ -84,11 +72,6 @@ export default function RegistroPrestamo() {
           }));
           setIdEstudiante(estudiante.id_estudiante);
           setEstudianteNoEncontrado(false);
-
-          // Buscar inscripciones
-          obtenerInscripciones(estudiante.id_estudiante).then(insc => {
-            setInscripciones(insc);
-          });
         } else {
           setForm(prev => ({
             ...prev,
@@ -96,7 +79,6 @@ export default function RegistroPrestamo() {
             apellidos: "",
           }));
           setIdEstudiante(null);
-          setInscripciones([]);
           setEstudianteNoEncontrado(true);
         }
       });
@@ -107,25 +89,24 @@ export default function RegistroPrestamo() {
         apellidos: "",
       }));
       setIdEstudiante(null);
-      setInscripciones([]);
       setEstudianteNoEncontrado(false);
     }
   }, [form.registro]);
 
-  
+  // Buscar por materia, módulo y semestre
+  const [materias, setMaterias] = useState([]);
   useEffect(() => {
-  if (inscripciones.length > 0 && form.materia && form.modulo) {
-    // Aquí debes tener los valores correctos para comparar
-    const insc = inscripciones.find(m =>
-      m.docente_materia?.materia?.nombre === form.materia &&
-      m.id_modulo === Number(form.modulo)
-      // Puedes agregar semestre si lo manejas
-    );
-    setIdEstudiantesMateria(insc ? insc.id_estudiantes_materia : null);
-  } else {
-    setIdEstudiantesMateria(null);
-  }
-}, [inscripciones, form.materia, form.modulo]);
+    const token = localStorage.getItem("token");
+    fetch("http://localhost:4000/api/materias", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          setMaterias(data.data);
+        }
+      });
+  }, []);
 
   // Autocompletar auxiliar entrega desde localStorage
   useEffect(() => {
@@ -151,6 +132,7 @@ export default function RegistroPrestamo() {
         asistente_recepcion: usuario.nombre + " " + usuario.apellido,
       });
       setDetalles(prestamoADevolver.detalles || []);
+      setIdEstudiantesMateria(prestamoADevolver.id_estudiantes_materia ? prestamoADevolver.id_estudiantes_materia.toString() : "");
     }
   }, []);
 
@@ -170,7 +152,7 @@ export default function RegistroPrestamo() {
     });
     const data = await res.json();
     if (data.success) {
-      return data.data; // El material encontrado
+      return data.data;
     }
     return null;
   }
@@ -273,18 +255,35 @@ export default function RegistroPrestamo() {
 
     // Validar que haya un idEstudiantesMateria seleccionado
     if (!idEstudiantesMateria) {
-      alert("Selecciona una materia y módulo válidos para el estudiante.");
+      alert("Selecciona una materia válida para el estudiante.");
       return;
     }
 
-    const token = localStorage.getItem("token");
+    // Validar que los campos manuales estén completos
+    if (!idMateriaSeleccionada || !idModuloSeleccionado || !idSemestreSeleccionado) {
+      alert("Completa todos los campos de materia, módulo y semestre.");
+      return;
+    }
+
+    // Obtener el usuario logueado desde localStorage
+    const usuario = JSON.parse(localStorage.getItem("user"));
+    const idUsuarioEntrega = usuario && usuario.id_usuario ? usuario.id_usuario : null;
+
+    if (!idUsuarioEntrega) {
+      alert("No se pudo obtener el usuario que entrega el préstamo.");
+      return;
+    }
+
     const prestamoData = {
-      id_estudiantes_materia: idEstudiantesMateria,
-      asistente_entrega: form.asistente_entrega,
-      asistente_recepcion: form.asistente_recepcion,
-      descripcion: form.descripcion,
+      id_estudiante: idEstudiante,
+      id_materia: idMateriaSeleccionada,
+      id_modulo: idModuloSeleccionado,
+      id_semestre: idSemestreSeleccionado,
+      id_usuario_entrega: idUsuarioEntrega,
+      id_usuario_recibe: null, // Puedes actualizar esto si tienes lógica de recepción
       fecha_prestamo: fechaHoraActual,
       id_estado: form.id_estado,
+      observaciones: form.descripcion,
       detalles,
     };
     try {
@@ -299,15 +298,12 @@ export default function RegistroPrestamo() {
       const data = await res.json();
       if (data.success) {
         alert("Préstamo registrado exitosamente.");
-        // Limpiar formulario si no es devolución
         if (!esDevolucion) {
           setForm(prev => ({
             ...prev,
             registro: "",
             nombres: "",
             apellidos: "",
-            materia: "",
-            modulo: "",
             descripcion: "",
             id_estado: "1",
           }));
@@ -319,6 +315,9 @@ export default function RegistroPrestamo() {
             especificaciones: "",
             cantidad: 1,
           });
+          setIdEstudiantesMateria("");
+          setModuloSeleccionado("");
+          setSemestreSeleccionado("");
         } else {
           localStorage.removeItem("prestamoADevolver");
         }
@@ -350,7 +349,7 @@ export default function RegistroPrestamo() {
               id="registro"
               name="registro"
               value={form.registro}
-              onChange={handleChange}
+              onChange={e => setForm(prev => ({ ...prev, registro: e.target.value }))}
               readOnly={esDevolucion}
               className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-var(--color-primary)"
               required
@@ -419,35 +418,53 @@ export default function RegistroPrestamo() {
         </div>
 
         {/* Materia y Módulo */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block mb-1 font-semibold" htmlFor="materia">
               Materia
             </label>
-            <input
-              type="text"
+            <select
               id="materia"
               name="materia"
-              value={form.materia}
-              onChange={handleChange}
-              readOnly={esDevolucion}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-var(--color-primary)"
+              value={idMateriaSeleccionada}
+              onChange={e => setIdMateriaSeleccionada(e.target.value)}
               required
-            />
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            >
+              <option value="">Seleccione una materia</option>
+              {materias.map(m => (
+                <option key={m.id_materia} value={m.id_materia}>
+                  {m.nombre}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block mb-1 font-semibold" htmlFor="modulo">
               Módulo
             </label>
             <input
-              type="text"
+              type="number"
               id="modulo"
               name="modulo"
-              value={form.modulo}
-              onChange={handleChange}
-              readOnly={esDevolucion}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-var(--color-primary)"
+              value={idModuloSeleccionado}
+              onChange={e => setIdModuloSeleccionado(e.target.value)}
               required
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-semibold" htmlFor="semestre">
+              Semestre
+            </label>
+            <input
+              type="number"
+              id="semestre"
+              name="semestre"
+              value={idSemestreSeleccionado}
+              onChange={e => setIdSemestreSeleccionado(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2"
             />
           </div>
         </div>
