@@ -3,8 +3,8 @@ const { Op } = require("sequelize");
 
 class EstudianteService {
   static async getAll() {
-  try {
-    const prestamos = await Prestamo.findAll({
+    try {
+      const estudiantes = await Estudiante.findAll({
       include: [
         {
           model: Estudiante,
@@ -37,14 +37,14 @@ class EstudianteService {
 
     return {
       success: true,
-      data: prestamos,
-      message: "Préstamos obtenidos correctamente",
+      data: estudiantes,
+      message: "Estudiantes obtenidos correctamente",
     };
   } catch (error) {
-    console.error("Error en PrestamoService.getAll:", error);
+    console.error("Error en EstudianteService.getAll:", error);
     return {
       success: false,
-      message: "Error al obtener préstamos",
+      message: "Error al obtener estudiantes",
     };
   }
 }

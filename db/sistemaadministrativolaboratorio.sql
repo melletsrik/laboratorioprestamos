@@ -276,3 +276,7 @@ INSERT INTO Materia (nombre, id_carrera) VALUES
 ('Microcontroladores', 11),
 ('Sistemas Digitales Programables', 11),
 ('Taller de Automatización', 11);
+INSERT INTO Facultad (id_facultad, nombre) VALUES ('4', 'Otro');
+INSERT INTO Carrera (id_carrera, nombre, id_facultad) VALUES (NULL, 'Otro', '4');
+SELECT*FROM usuario;
+SELECT *FROM estudiante;
