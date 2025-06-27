@@ -35,7 +35,6 @@ CREATE TABLE Estudiante (
     id_estudiante INT AUTO_INCREMENT,
     id_persona INT NOT NULL,
     Registro VARCHAR(25) NOT NULL UNIQUE,
-    estado BOOLEAN,
     PRIMARY KEY(id_estudiante),
     FOREIGN KEY(id_persona) REFERENCES Persona(id_persona)
 );
@@ -115,17 +114,6 @@ CREATE TABLE Docente_Materia (
     FOREIGN KEY(id_docente) REFERENCES Docente(id_docente)
 );
 
-CREATE TABLE Estudiante_Materia (
-    id_estudiantes_materia INT AUTO_INCREMENT,
-    id_estudiante INT NOT NULL,
-    id_docente_materia INT NOT NULL,
-    id_modulo INT NOT NULL,
-    id_semestre INT NOT NULL,
-    PRIMARY KEY(id_estudiantes_materia),
-    FOREIGN KEY(id_estudiante) REFERENCES Estudiante(id_estudiante),
-    FOREIGN KEY(id_docente_materia) REFERENCES Docente_Materia(id_docente_materia)
-);
-
 -- ====================
 -- INVENTARIO DE MATERIALES
 -- ====================
@@ -162,8 +150,10 @@ CREATE TABLE Prestamo (
     id_usuario_recibe INT,
     fecha_prestamo DATETIME NOT NULL,
     fecha_devolucion DATETIME,
-    observaciones TEXT,
+    id_modulo INT NOT NULL,
+    id_semestre INT NOT NULL,
     id_estado INT NOT NULL,
+    observaciones TEXT,
     PRIMARY KEY(id_prestamo),
     FOREIGN KEY(id_estudiante) REFERENCES Estudiante(id_estudiante),
     FOREIGN KEY(id_docente) REFERENCES Docente(id_docente),
@@ -233,3 +223,56 @@ INSERT INTO Persona (nombre, apellido) VALUES ('Jose Orlando', 'Moscoso');
 INSERT INTO Persona (nombre, apellido) VALUES ('Milton Freddy', 'Montaño');
 INSERT INTO Persona (nombre, apellido) VALUES ('Emilio Lazaro', 'Martínez');
 INSERT INTO Persona (nombre, apellido) VALUES ('Hugo Javier', 'Ponce');
+INSERT INTO Persona (nombre, apellido) VALUES ('María', 'García');
+INSERT INTO Persona (nombre, apellido) VALUES('Juan', 'Pérez'); 
+
+INSERT INTO Docente (id_docente, id_persona) VALUES (1, 1);
+INSERT INTO Docente (id_docente, id_persona) VALUES (2, 2);
+INSERT INTO Docente (id_docente, id_persona) VALUES (3, 3);
+INSERT INTO Docente (id_docente, id_persona) VALUES (4, 4);
+INSERT INTO Docente (id_docente, id_persona) VALUES (5, 5);
+INSERT INTO Docente (id_docente, id_persona) VALUES (6, 6);
+INSERT INTO Docente (id_docente, id_persona) VALUES (7, 7);
+INSERT INTO Docente (id_docente, id_persona) VALUES (8, 8);
+INSERT INTO Docente (id_docente, id_persona) VALUES (9, 9);
+INSERT INTO Docente (id_docente, id_persona) VALUES (10, 10);
+
+INSERT INTO Estudiante (id_estudiante, id_persona, Registro) VALUES (1, 11, '681350');
+INSERT INTO Estudiante (id_estudiante, id_persona, Registro) VALUES (2, 12, '606060');
+
+INSERT INTO Usuario (nombre, apellido, nombre_usuario, password_, id_rol, estado)
+VALUES ('Melissa', 'Chambi', 'mel', '$2a$12$dhcnijP523/INAP6FX0XaepN5II8txoQ71LuB6TWX5KzP4FCv03i2', 1, true);
+INSERT INTO Usuario (nombre, apellido, nombre_usuario, password_, id_rol, estado)
+VALUES ('Melissa', 'Chambi', 'meli', '$2a$12$dhcnijP523/INAP6FX0XaepN5II8txoQ71LuB6TWX5KzP4FCv03i2', 2, true);
+INSERT INTO usuario (nombre, apellido, nombre_usuario, password_, id_rol) 
+VALUES ('Nagely', 'A', 'n', '$2b$10$iiJT5FjvRHWH85ruJlBpjuA4FmBKEPcBNSVSgXbB/yymufpFKbQnm', 1, true);
+
+
+INSERT INTO Material (codigo_material, nombre, cantidad_total, especificaciones) 
+VALUES 
+('11111', 'Protoboard', 25, 'Protoboard estándar de 830 puntos, ideal para prototipos.'),
+('22223', 'Fuente de poder', 6, 'Fuente regulable de 0-30V / 0-5A con pantalla digital.'),
+('MAT005', 'Arduino UNO', 15, 'Placa Arduino UNO R3 original con cable USB.'),
+('MAT007', 'Transistor BC547', 100, 'Transistor NPN de propósito general, TO-92.'),
+('MAT008', 'Capacitor electrolítico 100µF', 200, 'Capacitor de 100 microfaradios, 25V.'),
+('MAT009', 'LED rojo 5mm', 500, 'LED rojo de 5mm, 2V, 20mA.'),
+('MAT010', 'Resistencia 1kΩ', 1000, 'Resistencia de 1 kilo-ohm, 1/4W, ±5%.');
+
+
+INSERT INTO Materia (nombre, id_carrera) VALUES
+('Electricidad y Automatismos', 11),
+('Robótica', 11),
+('Intro. Electrónica', 11),
+('Sistemas de control distribuido', 11),
+('Equipamiento Biomédico', 11),
+('Circuitos Eléctricos', 11),
+('Electrónica Analógica I', 11),
+('Electrónica Analógica II', 11),
+('Electrónica Digital', 11),
+('Electrónica de Potencia', 11),
+('Examen de Grado', 11),
+('Instrumentación y Comunicaciones Ind.', 11),
+('Instalaciones Eléctricas', 11),
+('Microcontroladores', 11),
+('Sistemas Digitales Programables', 11),
+('Taller de Automatización', 11);

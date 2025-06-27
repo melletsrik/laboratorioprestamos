@@ -28,20 +28,27 @@ export default function RegistroPrestamo() {
   const [codigoEscaneado, setCodigoEscaneado] = useState("");
   const [estudianteNoEncontrado, setEstudianteNoEncontrado] = useState(false);
   const [idEstudiante, setIdEstudiante] = useState(null);
-  const [idEstudiantesMateria, setIdEstudiantesMateria] = useState("");
-  const [inscripciones, setInscripciones] = useState([]);
   const [moduloSeleccionado, setModuloSeleccionado] = useState("");
   const [semestreSeleccionado, setSemestreSeleccionado] = useState("");
 
   // Agrega estos estados para materia, módulo y semestre seleccionados
   const [idMateriaSeleccionada, setIdMateriaSeleccionada] = useState("");
   const [idModuloSeleccionado, setIdModuloSeleccionado] = useState("");
-  const [idSemestreSeleccionado, setIdSemestreSeleccionado] = useState("");
+  const [idSemestreSeleccionada, setIdSemestreSeleccionada] = useState("");
 
   // Fecha y hora actual
   useEffect(() => {
     const now = new Date();
-    const fechaHora = now.toISOString().slice(0, 19).replace("T", " ");
+    const fechaHora = now.toLocaleString("es-BO", {
+      timeZone: "America/La_Paz",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    }).replace(",", "");
     setFechaHoraActual(fechaHora);
   }, []);
 
@@ -253,14 +260,14 @@ export default function RegistroPrestamo() {
       return;
     }
 
-    // Validar que haya un idEstudiantesMateria seleccionado
-    if (!idEstudiantesMateria) {
-      alert("Selecciona una materia válida para el estudiante.");
+    // Validar que se haya encontrado un estudiante
+    if (!idEstudiante) {
+      alert("Debes buscar y seleccionar un estudiante válido antes de registrar el préstamo.");
       return;
     }
 
     // Validar que los campos manuales estén completos
-    if (!idMateriaSeleccionada || !idModuloSeleccionado || !idSemestreSeleccionado) {
+    if (!idMateriaSeleccionada || !idModuloSeleccionado || !idSemestreSeleccionada) {
       alert("Completa todos los campos de materia, módulo y semestre.");
       return;
     }
@@ -268,6 +275,7 @@ export default function RegistroPrestamo() {
     // Obtener el usuario logueado desde localStorage
     const usuario = JSON.parse(localStorage.getItem("user"));
     const idUsuarioEntrega = usuario && usuario.id_usuario ? usuario.id_usuario : null;
+    const token = localStorage.getItem("token");
 
     if (!idUsuarioEntrega) {
       alert("No se pudo obtener el usuario que entrega el préstamo.");
@@ -278,7 +286,7 @@ export default function RegistroPrestamo() {
       id_estudiante: idEstudiante,
       id_materia: idMateriaSeleccionada,
       id_modulo: idModuloSeleccionado,
-      id_semestre: idSemestreSeleccionado,
+      id_semestre: idSemestreSeleccionada,
       id_usuario_entrega: idUsuarioEntrega,
       id_usuario_recibe: null, // Puedes actualizar esto si tienes lógica de recepción
       fecha_prestamo: fechaHoraActual,
@@ -315,9 +323,9 @@ export default function RegistroPrestamo() {
             especificaciones: "",
             cantidad: 1,
           });
-          setIdEstudiantesMateria("");
-          setModuloSeleccionado("");
-          setSemestreSeleccionado("");
+          setIdMateriaSeleccionada("");
+          setIdModuloSeleccionado("");
+          setIdSemestreSeleccionada("");
         } else {
           localStorage.removeItem("prestamoADevolver");
         }
@@ -461,8 +469,8 @@ export default function RegistroPrestamo() {
               type="number"
               id="semestre"
               name="semestre"
-              value={idSemestreSeleccionado}
-              onChange={e => setIdSemestreSeleccionado(e.target.value)}
+              value={idSemestreSeleccionada}
+              onChange={e => setIdSemestreSeleccionada(e.target.value)}
               required
               className="w-full border border-gray-300 rounded px-3 py-2"
             />

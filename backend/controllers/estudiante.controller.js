@@ -66,7 +66,7 @@ exports.update = async (req, res) => {
 
 exports.getByRegister = async (req, res) => {
   try {
-    const { registro } = req.query;
+    const { registro } = req.params;
 
     if (!registro) {
       return res.status(400).json({
