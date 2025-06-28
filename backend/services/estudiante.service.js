@@ -1,39 +1,17 @@
-const { Estudiante, Persona,Estudiante_Materia, Docente_Materia, sequelize} = require("../models");
+const { Estudiante, Persona, Usuario,sequelize} = require("../models");
 const { Op } = require("sequelize");
 
 class EstudianteService {
   static async getAll() {
     try {
       const estudiantes = await Estudiante.findAll({
-      include: [
-        {
-          model: Estudiante,
-          as: 'Estudiante',
-          include: ['persona']
-        },
-        { 
-          model: Usuario, 
-          as: 'UsuarioEntrega'
-        },
-        { 
-          model: Usuario, 
-          as: 'UsuarioRecibe'
-        },
-        { 
-          model: Estado_Prestamo, 
-          as: 'Estado'
-        },
-        {
-          model: Detalle_Prestamo,
-          as: 'Detalles',
-          include: [{ 
-            model: Material, 
-            as: 'material' 
-          }],
-        },
-      ],
-      order: [["fecha_prestamo", "DESC"]],
-    });
+        include: [
+          {
+            model: Persona,
+            as: 'persona'
+          }
+        ]
+      });
 
     return {
       success: true,

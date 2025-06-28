@@ -39,16 +39,7 @@ export default function RegistroPrestamo() {
   // Fecha y hora actual
   useEffect(() => {
     const now = new Date();
-    const fechaHora = now.toLocaleString("es-BO", {
-      timeZone: "America/La_Paz",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false
-    }).replace(",", "");
+    const fechaHora = now.toISOString().replace('T', ' ').slice(0, -5);
     setFechaHoraActual(fechaHora);
   }, []);
 
@@ -148,6 +139,22 @@ export default function RegistroPrestamo() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+
+    const [docentes, setDocentes] = useState([]);
+    const [idDocenteSeleccionado, setIdDocenteSeleccionado] = useState("");
+
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      fetch("http://localhost:4000/api/docentes", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            setDocentes(data.data);
+          }
+        });
+    }, []);
   // Buscar material por código
   async function buscarMaterialPorCodigo(codigo) {
     const token = localStorage.getItem("token");
@@ -266,6 +273,12 @@ export default function RegistroPrestamo() {
       return;
     }
 
+    //Validar que se haya seleccionado un docente
+    if (!idDocenteSeleccionado) {
+      alert("Debes seleccionar el docente responsable.");
+      return;
+    }
+
     // Validar que los campos manuales estén completos
     if (!idMateriaSeleccionada || !idModuloSeleccionado || !idSemestreSeleccionada) {
       alert("Completa todos los campos de materia, módulo y semestre.");
@@ -274,7 +287,7 @@ export default function RegistroPrestamo() {
 
     // Obtener el usuario logueado desde localStorage
     const usuario = JSON.parse(localStorage.getItem("user"));
-    const idUsuarioEntrega = usuario && usuario.id_usuario ? usuario.id_usuario : null;
+    const idUsuarioEntrega = usuario && usuario.id ? usuario.id : null;
     const token = localStorage.getItem("token");
 
     if (!idUsuarioEntrega) {
@@ -291,6 +304,7 @@ export default function RegistroPrestamo() {
       id_usuario_recibe: null, // Puedes actualizar esto si tienes lógica de recepción
       fecha_prestamo: fechaHoraActual,
       id_estado: form.id_estado,
+      id_docente: idDocenteSeleccionado,
       observaciones: form.descripcion,
       detalles,
     };
@@ -341,8 +355,8 @@ export default function RegistroPrestamo() {
   const esDevolucion = params.get("devolucion") === "1";
 
   return (
-    <div className="max-w-4xl mx-auto p-6" style={{ color: "var(--color-black)" }}>
-      <h1 className="text-3xl font-bold mb-6" style={{ color: "var(--color-primary)" }}>
+    <div className="bg-gray-50 min-h-screen px-7 py-6 max-w-4xl mx-auto py-5" style={{ color: "var(--color-black)" }}>
+      <h1 className="text-3xl font-bold text-white tracking-wide" style={{ color: "var(--color-primary)" }}>
         Registrar Préstamo
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -503,7 +517,27 @@ export default function RegistroPrestamo() {
             <option key={e.id_estado} value={e.id_estado}>{e.nombre}</option>
           ))}
         </select>
-
+        
+        <div>
+          <label className="block mb-1 font-semibold" htmlFor="docente">
+            Docente responsable
+          </label>
+          <select
+            id="docente"
+            name="docente"
+            value={idDocenteSeleccionado}
+            onChange={e => setIdDocenteSeleccionado(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded px-3 py-2"
+          >
+            <option value="">Seleccione un docente</option>
+            {docentes.map(d => (
+              <option key={d.id_docente} value={d.id_docente}>
+                {d.persona.nombre} {d.persona.apellido}
+              </option>
+            ))}
+          </select>
+        </div>
         {/* Descripción */}
         <div>
           <label className="block mb-1 font-semibold" htmlFor="descripcion">

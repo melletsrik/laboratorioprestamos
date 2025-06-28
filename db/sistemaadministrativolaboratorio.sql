@@ -7,10 +7,7 @@ DROP TABLE IF EXISTS Detalle_Prestamo;
 DROP TABLE IF EXISTS Prestamo;
 DROP TABLE IF EXISTS Estado_Prestamo;
 DROP TABLE IF EXISTS Material;
-DROP TABLE IF EXISTS Estudiante_Materia;
-DROP TABLE IF EXISTS Docente_Materia;
 DROP TABLE IF EXISTS Materia;
-DROP TABLE IF EXISTS Materia_Carrera;
 DROP TABLE IF EXISTS Carrera;
 DROP TABLE IF EXISTS Facultad;
 DROP TABLE IF EXISTS Usuario;
@@ -42,7 +39,7 @@ CREATE TABLE Estudiante (
 CREATE TABLE Docente (
     id_docente INT AUTO_INCREMENT,
     id_persona INT NOT NULL,
-    estado BOOLEAN,
+    estado BOOLEAN DEFAULT TRUE,
     PRIMARY KEY(id_docente),
     FOREIGN KEY(id_persona) REFERENCES Persona(id_persona)
 );
@@ -64,7 +61,7 @@ CREATE TABLE Usuario (
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
     password_ VARCHAR(255) NOT NULL,
     id_rol INT NOT NULL,
-    estado BOOLEAN,
+    estado BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (id_usuario),
     FOREIGN KEY (id_rol) REFERENCES Rol(id_rol)
 );
@@ -94,29 +91,10 @@ CREATE TABLE Materia (
     PRIMARY KEY(id_materia),
     FOREIGN KEY(id_carrera) REFERENCES Carrera(id_carrera)
 );
-
-CREATE TABLE Materia_Carrera (
-    id_materia_carrera INT AUTO_INCREMENT,
-    id_materia INT NOT NULL,
-    id_carrera INT NOT NULL,
-    PRIMARY KEY(id_materia_carrera),
-    FOREIGN KEY(id_materia) REFERENCES Materia(id_materia),
-    FOREIGN KEY(id_carrera) REFERENCES Carrera(id_carrera)
-);
-
-
-CREATE TABLE Docente_Materia (
-    id_docente_materia INT AUTO_INCREMENT,
-    id_materia INT NOT NULL,
-    id_docente INT NOT NULL,
-    PRIMARY KEY(id_docente_materia),
-    FOREIGN KEY(id_materia) REFERENCES Materia(id_materia),
-    FOREIGN KEY(id_docente) REFERENCES Docente(id_docente)
-);
-
 -- ====================
 -- INVENTARIO DE MATERIALES
 -- ====================
+
 
 CREATE TABLE Material (
     id_material INT AUTO_INCREMENT,
@@ -189,7 +167,9 @@ INSERT INTO Rol(descripcion) VALUES ('Administrativo'), ('Auxiliar');
 INSERT INTO Facultad (nombre) VALUES
 ('Ciencias Empresariales'),
 ('Ciencias y Tecnología'),
-('Ciencias Jurídicas, Sociales y Humanísticas');
+('Ciencias Jurídicas, Sociales y Humanísticas'),
+('Otro');
+
 
 INSERT INTO Carrera (nombre, id_facultad) VALUES
 ('Administración General', 1),
@@ -211,7 +191,8 @@ INSERT INTO Carrera (nombre, id_facultad) VALUES
 
 ('Derecho', 3),
 ('Relaciones Internacionales', 3),
-('Psicología', 3);
+('Psicología', 3),
+('Otro', '4');
 
 INSERT INTO Persona (nombre, apellido) VALUES ('Luis Pablo', 'Antelo Baldelomar');
 INSERT INTO Persona (nombre, apellido) VALUES ('Gabriel Alejandro', 'Cabezas Gutiérrez');
@@ -244,7 +225,7 @@ INSERT INTO Usuario (nombre, apellido, nombre_usuario, password_, id_rol, estado
 VALUES ('Melissa', 'Chambi', 'mel', '$2a$12$dhcnijP523/INAP6FX0XaepN5II8txoQ71LuB6TWX5KzP4FCv03i2', 1, true);
 INSERT INTO Usuario (nombre, apellido, nombre_usuario, password_, id_rol, estado)
 VALUES ('Melissa', 'Chambi', 'meli', '$2a$12$dhcnijP523/INAP6FX0XaepN5II8txoQ71LuB6TWX5KzP4FCv03i2', 2, true);
-INSERT INTO usuario (nombre, apellido, nombre_usuario, password_, id_rol) 
+INSERT INTO Usuario (nombre, apellido, nombre_usuario, password_, id_rol, estado) 
 VALUES ('Nagely', 'A', 'n', '$2b$10$iiJT5FjvRHWH85ruJlBpjuA4FmBKEPcBNSVSgXbB/yymufpFKbQnm', 1, true);
 
 
@@ -276,7 +257,3 @@ INSERT INTO Materia (nombre, id_carrera) VALUES
 ('Microcontroladores', 11),
 ('Sistemas Digitales Programables', 11),
 ('Taller de Automatización', 11);
-INSERT INTO Facultad (id_facultad, nombre) VALUES ('4', 'Otro');
-INSERT INTO Carrera (id_carrera, nombre, id_facultad) VALUES (NULL, 'Otro', '4');
-SELECT*FROM usuario;
-SELECT *FROM estudiante;

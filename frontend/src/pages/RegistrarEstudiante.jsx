@@ -176,15 +176,15 @@ export default function RegistrarEstudiante() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <button
-                       onClick={() => {
-  const rol = localStorage.getItem("rol");
-  if (rol === "Administrativo") {
-    navegar("/menu-admin");
-  } else {
-    navegar("/menu-aux");
-  }
-}}  className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
-            >
+                onClick={() => {
+                const rol = localStorage.getItem("rol");
+                if (rol === "Administrativo") {
+                  navegar("/menu-admin");
+                } else {
+                  navegar("/menu-aux");
+                }
+              }}  className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
+              >
               <IoArrowBackCircleOutline className="w-6 h-6" />
               Volver al Menú
             </button>

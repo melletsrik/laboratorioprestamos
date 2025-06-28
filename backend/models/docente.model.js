@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       estado: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: true,
+        defaultValue: 1
       },
     },
     {
@@ -28,8 +28,8 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "id_persona",
       as: "persona",
     });
-    Docente.belongsTo(models.Prestamo, {
-      foreignKey: "id_prestamo",
+    Docente.hasMany(models.Prestamo, {
+      foreignKey: "id_docente",
       as: "prestamo",
     });
   };

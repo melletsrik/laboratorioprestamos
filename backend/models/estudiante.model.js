@@ -28,8 +28,8 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "id_persona",
       as: "persona",
     });
-    Estudiante.belongsTo(models.Prestamo, {
-      foreignKey: "id_prestamo",
+    Estudiante.hasMany(models.Prestamo, {
+      foreignKey: "id_estudiante",
       as: "prestamo",
     });
   };
