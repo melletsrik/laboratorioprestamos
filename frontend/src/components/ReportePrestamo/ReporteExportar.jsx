@@ -10,29 +10,87 @@ export default function ReporteExportar({ datos, filtros }) {
       alert("No hay datos que exportar");
       return;
     }
- const encabezados = ['ID Préstamo', 'Asistente que Entrega', 'Asistente que Recepciona', 'Registro',  'Apellido', 'Nombre', 'Módulo',  'Materia', 'Docente','Fecha Entrega','Fecha Recepción','Material', 'Cantidad', 'Estado',  'Observaciones'  ];
-  // Convertir datos a formato CSV
-    const filas = datos.map(item => [
-      item.id_prestamo || '',
-      item.nombre_asistente_entrega || '',
-      item.nombre_asistente_recepcion || '',
-      item.registro_estudiante || '',
-      item.apellido_estudiante || '',
-      item.nombre_estudiante || '',
-      item.modulo || '',
-      item.materia || '',
-      item.docente || '',
-      formatearFechaExcel(item.fecha_entrega),
-      formatearFechaExcel(item.fecha_recepcion),
-      item.material || '',
-      item.cantidad || '',
-      obtenerTextoEstado(item.estado),
-      item.observaciones || ''
-    ]);
+ const encabezados = [
+  'Estudiante',
+  'Registro',
+  'Docente',
+  'Materia',
+  'Módulo',
+  'Semestre',
+  'Material',
+  'Código Material',
+  'Cantidad',
+  'Devuelto',
+  'Estado',
+  'Fecha Préstamo',
+  'Descripción Préstamo',
+  'Fecha Devolución',
+  'Descripción Devolución',
+  'Entregado Por',
+  'Recibido Por',
+  'Observaciones'
+];
+// Convertir datos a formato CSV
+    const filas = [];
+
+datos.forEach(item => {
+   item.detalles.forEach((detalle) => {
+      filas.push({
+        Estudiante: `${item.estudiante?.nombres || ''} ${item.estudiante?.apellidos || ''}`,
+        Registro: item.estudiante?.Registro || 'N/A',
+        Docente: item.docente?.nombres ? `${item.docente.nombres} ${item.docente.apellidos}` : 'N/A',
+        Materia: item.materia?.nombre || 'N/A',
+        Módulo: item.modulo?.id_modulo || 'N/A',
+        Semestre: item.semestre?.id_semestre || 'N/A',
+        Material: detalle.material?.nombre || 'N/A',
+        Código_Material: detalle.material?.codigo_material || 'N/A',
+        Cantidad: detalle.cantidad,
+        Devuelto: detalle.cantidad_devuelta,
+        Estado: obtenerTextoEstado(item.estado?.id_estado),
+        Fecha_Préstamo: new Date(item.fecha_prestamo).toLocaleString(),
+        Descripción_Prestamo: item.descripcion_prestamo || 'N/A',
+        Fecha_Devolución: detalle.fecha_devolucion
+          ? new Date(detalle.fecha_devolucion).toLocaleString()
+          : 'N/A',
+        Descripción_Devolución: detalle.descripcion_devolucion || 'N/A',
+        Entregado_Por: `${item.usuario_entrega?.nombres || ''} ${item.usuario_entrega?.apellidos || ''}`,
+        Recibido_Por: detalle.usuario_recibe
+          ? `${detalle.usuario_recibe.nombres} ${detalle.usuario_recibe.apellidos}`
+          : 'N/A',
+        Observaciones: obtenerTextoObservacion(item.observacion)
+      });
+    });
+  });
+
+
+
+    // Convertir los datos a formato compatible con XLSX
+    const datosExcel = filas.map(fila => {
+      return [
+        fila.Estudiante,
+        fila.Registro,
+        fila.Docente,
+        fila.Materia,
+        fila.Módulo,
+        fila.Semestre,
+        fila.Material,
+        fila.Código_Material,
+        fila.Cantidad,
+        fila.Devuelto,
+        fila.Estado,
+        fila.Fecha_Préstamo,
+        fila.Descripción_Prestamo,
+        fila.Fecha_Devolución,
+        fila.Descripción_Devolución,
+        fila.Entregado_Por,
+        fila.Recibido_Por,
+        fila.Observaciones
+      ];
+    });
 
     // Crear el archivo Excel
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([encabezados, ...filas]);
+    const ws = XLSX.utils.aoa_to_sheet([encabezados, ...datosExcel]);
     XLSX.utils.book_append_sheet(wb, ws, 'Reporte');
 
     // Generar el nombre del archivo
@@ -57,18 +115,14 @@ export default function ReporteExportar({ datos, filtros }) {
   };
 
   // Obtener texto de estado
-  const obtenerTextoEstado = (estado) => {
-    switch (estado?.toLowerCase()) {
-      case 'prestado':
-        return 'Prestado';
-      case 'devuelto':
-        return 'Devuelto';
-      case 'parcial':
-        return 'Parcialmente Devuelto';
-      default:
-        return 'N/A';
-    }
-  };
+const obtenerTextoEstado = (estadoId) => {
+  switch (estadoId) {
+    case 1: return 'Prestado';
+    case 2: return 'Parcial';
+    case 3: return 'Devuelto';
+    default: return 'N/A';
+  }
+};
 
   return (
       <button
@@ -83,7 +137,7 @@ export default function ReporteExportar({ datos, filtros }) {
         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        Excel
+        Exportar Excel
       </button>
      
   

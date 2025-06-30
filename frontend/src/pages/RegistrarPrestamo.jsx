@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from "react";
-
+import { useNavigate } from "react-router-dom";
+import { Auth } from "../utils/auth";
+import { IoArrowBackCircleOutline } from "react-icons/io5";
+import { LuLogOut } from "react-icons/lu";
 const estadosPrestamo = [
   { id_estado: 1, nombre: "Activo" },
   { id_estado: 3, nombre: "Devuelto" }
 ];
 
 export default function RegistroPrestamo() {
+  const token = Auth.getToken();
+  const navegar = useNavigate();
   const [form, setForm] = useState({
     registro: "",
     nombres: "",
     apellidos: "",
     asistente_entrega: "",
     asistente_recepcion: "",
-    descripcion: "",
+    observaciones: "",
     id_estado: "1",
   });
 
@@ -23,13 +28,22 @@ export default function RegistroPrestamo() {
     nombre: "",
     especificaciones: "",
     cantidad: 1,
+    descripcion_devolucion: ""
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [ultimoTimeout, setUltimoTimeout] = useState(null);
+  useEffect(() => {
+    if (!token) {
+      navegar("/");
+    }
+  }, [token, navegar]);
+
+  if (!token) return null;
+
   const [fechaHoraActual, setFechaHoraActual] = useState("");
-  const [codigoEscaneado, setCodigoEscaneado] = useState("");
+
   const [estudianteNoEncontrado, setEstudianteNoEncontrado] = useState(false);
   const [idEstudiante, setIdEstudiante] = useState(null);
-  const [moduloSeleccionado, setModuloSeleccionado] = useState("");
-  const [semestreSeleccionado, setSemestreSeleccionado] = useState("");
 
   // Agrega estos estados para materia, módulo y semestre seleccionados
   const [idMateriaSeleccionada, setIdMateriaSeleccionada] = useState("");
@@ -55,9 +69,6 @@ export default function RegistroPrestamo() {
     }
     return null;
   }
-
-
-
   // Autocompletar nombres y apellidos al cambiar el registro
   useEffect(() => {
     if (form.registro) {
@@ -124,51 +135,73 @@ export default function RegistroPrestamo() {
     const prestamoADevolver = JSON.parse(localStorage.getItem("prestamoADevolver"));
     const usuario = JSON.parse(localStorage.getItem("user"));
     if (esDevolucion && prestamoADevolver && usuario) {
-      setForm({
-        ...prestamoADevolver,
+      setForm(prev => ({
+        ...prev,
+        registro: prestamoADevolver.registro || "",
+        nombres: prestamoADevolver.nombres || "",
+        apellidos: prestamoADevolver.apellidos || "",
         asistente_entrega: prestamoADevolver.asistente_entrega || "",
         asistente_recepcion: usuario.nombre + " " + usuario.apellido,
-      });
+        observaciones: prestamoADevolver.observaciones || "",
+        
+        // NO establecemos id_estado, lo dejamos como estaba o que el usuario lo elija
+      }));
       setDetalles(prestamoADevolver.detalles || []);
-      setIdEstudiantesMateria(prestamoADevolver.id_estudiantes_materia ? prestamoADevolver.id_estudiantes_materia.toString() : "");
+      setIdMateriaSeleccionada(prestamoADevolver.id_materia?.toString() || "");
+      setIdModuloSeleccionado(prestamoADevolver.id_modulo?.toString() || "");
+      setIdSemestreSeleccionada(prestamoADevolver.id_semestre?.toString() || "");
+      setIdDocenteSeleccionado(prestamoADevolver.id_docente?.toString() || "");
     }
   }, []);
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const esDevolucion = new URLSearchParams(window.location.search).get("devolucion") === "1";
+    if (name === "descripcion") {
+      setForm((prev) => ({
+        ...prev,
+        [esDevolucion ? "descripcion_devolucion" : "descripcion_prestamo"]: value
+      }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
   }
 
+  const [docentes, setDocentes] = useState([]);
+  const [idDocenteSeleccionado, setIdDocenteSeleccionado] = useState("");
 
-    const [docentes, setDocentes] = useState([]);
-    const [idDocenteSeleccionado, setIdDocenteSeleccionado] = useState("");
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    fetch("http://localhost:4000/api/docentes", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          setDocentes(data.data);
+        }
+      });
+  }, []);
 
-    useEffect(() => {
-      const token = localStorage.getItem("token");
-      fetch("http://localhost:4000/api/docentes", {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.data) {
-            setDocentes(data.data);
-          }
-        });
-    }, []);
   // Buscar material por código
   async function buscarMaterialPorCodigo(codigo) {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`http://localhost:4000/api/materiales/${codigo}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
+    try {
+      const token = Auth.getToken();
+      const res = await fetch(`http://localhost:4000/api/materiales/${codigo}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        return data.data;
       }
-    });
-    const data = await res.json();
-    if (data.success) {
-      return data.data;
+      return null;
+    } catch (error) {
+      console.error('Error buscando material:', error);
+      return null;
     }
-    return null;
   }
 
   // Manejar cambios en los detalles del material
@@ -199,28 +232,56 @@ export default function RegistroPrestamo() {
     }
   }
 
-  // Manejar input del escaneo simulado
-  function handleScanInputChange(e) {
-    setCodigoEscaneado(e.target.value);
-  }
+  // Manejar escaneo de código de barras desde teclado
+  useEffect(() => {
+    const handleKeyPress = async (e) => {
+      // Solo procesar si el input de código está en foco
+      if (document.activeElement.name === 'codigo_material') {
+        // Limpiar el timeout anterior si existe
+        if (ultimoTimeout) {
+          clearTimeout(ultimoTimeout);
+        }
 
-  // Simular escaneo de código de barras
-  async function handleSimularEscaneo(e) {
-    e.preventDefault();
-    const material = await buscarMaterialPorCodigo(codigoEscaneado);
-    if (material) {
-      setNuevoDetalle({
-        id_material: material.id_material,
-        codigo_material: material.codigo_material,
-        nombre: material.nombre,
-        especificaciones: material.especificaciones,
-        cantidad: 1
-      });
-      setCodigoEscaneado("");
-    } else {
-      alert("Material no encontrado");
-    }
-  }
+        // Establecer nuevo timeout
+        const timeout = setTimeout(async () => {
+          const codigo = document.activeElement.value;
+          
+          // Verificar si el código tiene al menos 8 caracteres
+          if (codigo.length >= 8) {
+            setIsLoading(true);
+            try {
+              const material = await buscarMaterialPorCodigo(codigo);
+              if (material) {
+                setNuevoDetalle({
+                  id_material: material.id_material,
+                  codigo_material: material.codigo_material,
+                  nombre: material.nombre,
+                  especificaciones: material.especificaciones,
+                  cantidad: 1
+                });
+                document.activeElement.value = ""; // Limpiar el input
+              } else {
+                alert("Material no encontrado");
+              }
+            } catch (error) {
+              console.error('Error buscando material:', error);
+              alert('Error al buscar el material');
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }, 200); // Aumentamos el delay a 200ms para mayor precisión
+
+        setUltimoTimeout(timeout);
+      }
+    };
+
+    // Agregar el listener de eventos
+    document.addEventListener('keydown', handleKeyPress);
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [ultimoTimeout]);
 
   // Agregar detalle a la lista
   function agregarDetalle() {
@@ -252,6 +313,7 @@ export default function RegistroPrestamo() {
       nombre: "",
       especificaciones: "",
       cantidad: 1,
+      descripcion_devolucion: ""
     });
   }
 
@@ -294,7 +356,6 @@ export default function RegistroPrestamo() {
       alert("No se pudo obtener el usuario que entrega el préstamo.");
       return;
     }
-
     const prestamoData = {
       id_estudiante: idEstudiante,
       id_materia: idMateriaSeleccionada,
@@ -305,28 +366,80 @@ export default function RegistroPrestamo() {
       fecha_prestamo: fechaHoraActual,
       id_estado: form.id_estado,
       id_docente: idDocenteSeleccionado,
-      observaciones: form.descripcion,
+      observaciones: form.observaciones,
       detalles,
     };
     try {
-      const res = await fetch("http://localhost:4000/api/prestamos", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(prestamoData),
-      });
-      const data = await res.json();
+      let res;
+      let data;
+
+      if (esDevolucion) {
+        const prestamoADevolver = JSON.parse(localStorage.getItem("prestamoADevolver"));
+        const idPrestamo = prestamoADevolver?.id_prestamo;
+        if (!idPrestamo) {
+          alert("No se encontró el ID del préstamo a devolver.");
+          return;
+        }
+
+        // Prepara los detalles para devolución
+        const detallesDevolucion = detalles.map((detalle) => ({
+          id_detalle_prestamo: detalle.id_detalle_prestamo,
+          cantidad_devuelta: detalle.cantidad_devuelta || detalle.cantidad,
+          descripcion_devolucion: detalle.descripcion_devolucion || ''
+        }));
+
+        // Tomar la observación anterior y agregar la nueva descripción de devolución
+        const descripcionDevolucion = form.descripcion_devolucion?.trim();
+        const observacionAnterior = prestamoADevolver?.observaciones || "";
+        const observacionesCompletas = [
+        observacionAnterior.trim(),
+        descripcionDevolucion ? `[Devolución] ${descripcionDevolucion}` : null
+].filter(Boolean).join('\n');
+
+// Armar el objeto final
+const devolucionData = {
+  id_usuario_recibe: usuario.id,
+  detalles: detallesDevolucion,
+  observaciones: observacionesCompletas
+};
+
+
+        res = await fetch(`http://localhost:4000/api/prestamos/${idPrestamo}/devolver`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(devolucionData),
+        });
+        data = await res.json();
+      } else {
+        // flujo normal para registrar préstamo
+        res = await fetch("http://localhost:4000/api/prestamos", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(prestamoData),
+        });
+        data = await res.json();
+      }
+      console.log("Respuesta del backend:", data);
+
       if (data.success) {
-        alert("Préstamo registrado exitosamente.");
-        if (!esDevolucion) {
+        if (esDevolucion) {
+          alert("Devolución registrada exitosamente.");
+          window.location.href = "/prestamo-activos";
+        } else {
+          alert("Préstamo registrado exitosamente.");
+
           setForm(prev => ({
             ...prev,
             registro: "",
             nombres: "",
             apellidos: "",
-            descripcion: "",
+            observaciones: "",
             id_estado: "1",
           }));
           setDetalles([]);
@@ -336,15 +449,15 @@ export default function RegistroPrestamo() {
             nombre: "",
             especificaciones: "",
             cantidad: 1,
+            descripcion_devolucion: ""
           });
           setIdMateriaSeleccionada("");
           setIdModuloSeleccionado("");
           setIdSemestreSeleccionada("");
-        } else {
-          localStorage.removeItem("prestamoADevolver");
         }
       } else {
-        alert(data.error || "Error al registrar el préstamo.");
+        console.error("Error del backend:", data);
+        alert(`Error al registrar el préstamo:\n${data.error || JSON.stringify(data)}`);
       }
     } catch (err) {
       alert("Error de red al registrar el préstamo.");
@@ -353,9 +466,33 @@ export default function RegistroPrestamo() {
 
   const params = new URLSearchParams(window.location.search);
   const esDevolucion = params.get("devolucion") === "1";
-
   return (
-    <div className="bg-gray-50 min-h-screen px-7 py-6 max-w-4xl mx-auto py-5" style={{ color: "var(--color-black)" }}>
+    <div className="bg-gray-50 min-h-screen px-7  max-w-4xl mx-auto " style={{ color: "var(--color-black)" }}>
+      <div className="flex items-center justify-between mb-4">
+                  <button
+                      onClick={() => {
+                      const rol = localStorage.getItem("rol");
+                      if (rol === "Administrativo") {
+                        navegar("/menu-admin");
+                      } else {
+                        navegar("/menu-aux");
+                      }
+                    }}  className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
+                    >
+                    <IoArrowBackCircleOutline className="w-6 h-6" />
+                    Volver al Menú
+                  </button>
+                  <button
+                    onClick={() => {
+                      localStorage.clear();
+                      navegar("/");
+                    }}
+                    className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+                  >
+                    <LuLogOut className="w-5 h-5" />
+                    Cerrar Sesión
+                  </button>
+                </div>
       <h1 className="text-3xl font-bold text-white tracking-wide" style={{ color: "var(--color-primary)" }}>
         Registrar Préstamo
       </h1>
@@ -448,6 +585,7 @@ export default function RegistroPrestamo() {
             <select
               id="materia"
               name="materia"
+              disabled={esDevolucion}
               value={idMateriaSeleccionada}
               onChange={e => setIdMateriaSeleccionada(e.target.value)}
               required
@@ -465,29 +603,40 @@ export default function RegistroPrestamo() {
             <label className="block mb-1 font-semibold" htmlFor="modulo">
               Módulo
             </label>
-            <input
+            <select
               type="number"
+              disabled={esDevolucion}
               id="modulo"
               name="modulo"
               value={idModuloSeleccionado}
               onChange={e => setIdModuloSeleccionado(e.target.value)}
               required
               className="w-full border border-gray-300 rounded px-3 py-2"
-            />
+            >
+              <option value="">Seleccione módulo</option>
+              {[0, 1, 2, 3, 4, 5].map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block mb-1 font-semibold" htmlFor="semestre">
               Semestre
             </label>
-            <input
-              type="number"
+            <select
+              disabled={esDevolucion}
               id="semestre"
               name="semestre"
               value={idSemestreSeleccionada}
               onChange={e => setIdSemestreSeleccionada(e.target.value)}
               required
               className="w-full border border-gray-300 rounded px-3 py-2"
-            />
+            >
+              <option value="">Seleccione módulo</option>
+              {[1, 2].map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -505,19 +654,20 @@ export default function RegistroPrestamo() {
           />
         </div>
 
-        <label>Estado del préstamo</label>
+        <label className="px-3">Estado del Préstamo</label>
         <select
           name="id_estado"
           value={form.id_estado}
           onChange={handleChange}
           required
+          className="w-30 border border-gray-300 rounded px-3 py-2 "
         >
           <option value="">Seleccione estado</option>
           {estadosPrestamo.map(e => (
             <option key={e.id_estado} value={e.id_estado}>{e.nombre}</option>
           ))}
         </select>
-        
+
         <div>
           <label className="block mb-1 font-semibold" htmlFor="docente">
             Docente responsable
@@ -525,6 +675,7 @@ export default function RegistroPrestamo() {
           <select
             id="docente"
             name="docente"
+            disabled={esDevolucion}
             value={idDocenteSeleccionado}
             onChange={e => setIdDocenteSeleccionado(e.target.value)}
             required
@@ -538,18 +689,19 @@ export default function RegistroPrestamo() {
             ))}
           </select>
         </div>
+
         {/* Descripción */}
         <div>
           <label className="block mb-1 font-semibold" htmlFor="descripcion">
-            Descripción
+            {esDevolucion ? 'Descripción de Devolución' : 'Descripción del Préstamo'}
           </label>
           <textarea
             id="descripcion"
             name="descripcion"
             rows="3"
-            value={form.descripcion}
+            value={esDevolucion ? form.descripcion_devolucion : form.descripcion_prestamo}
             onChange={handleChange}
-            readOnly={esDevolucion}
+            
             className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-var(--color-primary)"
           />
         </div>
@@ -559,29 +711,7 @@ export default function RegistroPrestamo() {
           <h2 className="text-2xl font-semibold mb-4" style={{ color: "var(--color-primary)" }}>
             Detalles del préstamo
           </h2>
-          <div className="mb-4">
-            <label className="block mb-1 font-semibold" htmlFor="codigoEscaneado">
-              Simular escaneo de código de barras
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                id="codigoEscaneado"
-                value={codigoEscaneado}
-                onChange={handleScanInputChange}
-                placeholder="Ej: MAT-001"
-                className="border border-gray-300 rounded px-3 py-2"
-              />
-              <button
-                type="button"
-                onClick={handleSimularEscaneo}
-                style={{ backgroundColor: "var(--color-primary)", color: "var(--color-white)" }}
-                className="rounded px-4 py-2 font-semibold hover:opacity-90 transition"
-              >
-                Simular escaneo
-              </button>
-            </div>
-          </div>
+
           <div className="flex gap-4 items-end flex-wrap">
             <div className="flex-1 min-w-[150px]">
               <label className="block mb-1 font-semibold" htmlFor="codigo_material">
@@ -592,8 +722,14 @@ export default function RegistroPrestamo() {
                 id="codigo_material"
                 name="codigo_material"
                 value={nuevoDetalle.codigo_material}
-                onChange={handleDetalleChange}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault(); // Evita que se envíe el formulario al escanear
+                  }
+                }}
+                disabled={esDevolucion}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-var(--color-primary)"
+                placeholder="Escanear código de barras..."
               />
             </div>
             <div className="w-24">
@@ -607,6 +743,7 @@ export default function RegistroPrestamo() {
                 min="1"
                 value={nuevoDetalle.cantidad}
                 onChange={handleDetalleChange}
+                disabled={esDevolucion}
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-var(--color-primary)"
                 required
               />
@@ -614,6 +751,7 @@ export default function RegistroPrestamo() {
             <button
               type="button"
               onClick={agregarDetalle}
+              disabled={esDevolucion}
               style={{ backgroundColor: "var(--color-primary)", color: "var(--color-white)" }}
               className="rounded px-5 py-2 font-semibold hover:opacity-90 transition"
             >
@@ -628,6 +766,7 @@ export default function RegistroPrestamo() {
                 <th className="border border-gray-300 px-4 py-2 text-left">Nombre</th>
                 <th className="border border-gray-300 px-4 py-2 text-left">Especificaciones</th>
                 <th className="border border-gray-300 px-4 py-2 text-left">Cantidad</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Cantidad a Devolver</th>
               </tr>
             </thead>
             <tbody>
@@ -644,6 +783,29 @@ export default function RegistroPrestamo() {
                   <td className="border border-gray-300 px-4 py-2">{d.nombre}</td>
                   <td className="border border-gray-300 px-4 py-2">{d.especificaciones}</td>
                   <td className="border border-gray-300 px-4 py-2">{d.cantidad}</td>
+                  <td className="border border-gray-300 px-4 py-2">
+            <input
+              type="number"
+              disabled={!esDevolucion}
+              value={d.cantidad_devuelta ?? d.cantidad_prestada ?? d.cantidad}
+              onChange={(e) => {
+                const value = Math.min(
+                  parseInt(e.target.value) || 0,
+                  d.cantidad_prestada || d.cantidad
+                );
+                const updatedDetalles = [...detalles];
+                updatedDetalles[i] = {
+                  ...updatedDetalles[i],
+                  cantidad_devuelta: value
+                };
+                setDetalles(updatedDetalles);
+              }}
+              min="0"
+              max={d.cantidad_prestada || d.cantidad}
+              className="w-full border rounded p-1 text-center"
+              required
+            />
+          </td>
                 </tr>
               ))}
             </tbody>

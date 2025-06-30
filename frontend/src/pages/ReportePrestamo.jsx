@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import ReporteBusqueda from "../components/ReportePrestamo/ReporteBusqueda";
 import ReporteTabla from "../components/ReportePrestamo/ReporteTabla";
 import ReporteExportar from "../components/ReportePrestamo/ReporteExportar";
 import { LuClipboardList, LuLogOut } from "react-icons/lu";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
-import { LuBookOpen } from "react-icons/lu";
-
+import { RiFileExcel2Line } from "react-icons/ri";
 export default function VentanaReporte() {
+  const navegar = useNavigate();
   const [datos, setDatos] = useState([]);
   const [datosFiltrados, setDatosFiltrados] = useState([]);
   const [cargando, setCargando] = useState(false);
@@ -29,18 +30,22 @@ export default function VentanaReporte() {
     setCargando(true);
     setMensaje('');
     try {
+      const token= localStorage.getItem("token");
+      if (!token) {
+        throw new Error('No se encontró token de autenticación');
+      }
       const response = await axios.get(
-        `http://localhost:4000/api/reporte`,
+        `http://localhost:4000/api/reporte/prestamos`,
         {
           params: {
             fechaInicio: filtros.fechaInicio,
             fechaFin: filtros.fechaFin,
-            estado: filtros.estado
+            estado: filtros.estado || null
           },
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
-          },
+          }
         }
       );
       if (response.data?.success) {
@@ -90,19 +95,62 @@ export default function VentanaReporte() {
     }));
      filtrarDatos(textoBusqueda);
   };
+
     
   return (
     <div className="min-h-screen max-w-6xl mx-auto p-6 space-y-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">📊 Reporte de Préstamos</h1>
+      <div className="bg-white">
+              <div className="max-w-7xl mx-auto px-6 py-4">
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                        onClick={() => {
+                         const rol = localStorage.getItem("rol");
+                         if (rol === "Administrativo") {
+                         navegar("/menu-admin");
+                       } else {
+                       navegar("/menu-aux");
+                      }
+                    }}
+                    className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
+                  >
+                    <IoArrowBackCircleOutline className="w-6 h-6" />
+                    Volver al Menú
+                  </button>
+                  <button
+                    onClick={() => {
+                      localStorage.clear();
+                      navegar("/");
+                    }}
+                    className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+                  >
+                    <LuLogOut className="w-5 h-5" />
+                    Cerrar Sesión
+                  </button>
+                </div>
+              </div>
+            </div>
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+          <RiFileExcel2Line  className="w-6 h-6 text-red-600 " />
+          <h1 className="text-2xl font-bold text-gray-800"> Reporte de Préstamos</h1>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-end gap-4 mb-6">
           <div className="flex-1">
-            <ReporteBusqueda filtros={filtros}  onFiltrosChange={manejarFiltros}   onBuscar={cargarReporte}   onBusquedaChange={manejarBusqueda}    cargando={cargando}  />
+            <ReporteBusqueda 
+              filtros={filtros}  
+              onFiltrosChange={manejarFiltros}  
+              mensaje={mensaje}  
+              onBuscar={cargarReporte}   
+              onBusquedaChange={manejarBusqueda}    
+              cargando={cargando}  
+              setMensaje={setMensaje}
+            />
           </div>
-          <div className="flex items-center">
+           {/* Botón de Excel alineado con el botón Buscar */}
+          <div className="lg:pb-0 lg:ml-2">
             <ReporteExportar datos={datosFiltrados} filtros={filtros} />
           </div>
         </div>
@@ -116,8 +164,9 @@ export default function VentanaReporte() {
             {mensaje}
           </div>
         )}
-        <ReporteTabla datos={datosFiltrados} cargando={cargando} />
+        <ReporteTabla datos={datosFiltrados || []} cargando={cargando} />
     </div>
    </div>
-  );
+
+);
 }

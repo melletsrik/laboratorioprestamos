@@ -1,8 +1,8 @@
-const PrestamoService = require("../services/prestamo.service");
+const ReporteService = require("../services/reporte.service");
 
 exports.getReportePrestamos = async (req, res) => {
   try {
-    const { fechaInicio, fechaFin, periodo, estado } = req.query;
+    const { fechaInicio, fechaFin, estado } = req.query;
     
     // Validar parámetros
     if (!fechaInicio || !fechaFin) {
@@ -12,31 +12,24 @@ exports.getReportePrestamos = async (req, res) => {
       });
     }
 
-    // Validar formato de fechas
-    const fechaInicioValida = new Date(fechaInicio);
-    const fechaFinValida = new Date(fechaFin);
-    
-    if (isNaN(fechaInicioValida) || isNaN(fechaFinValida)) {
-      return res.status(400).json({
-        success: false,
-        message: "Formato de fecha inválido"
-      });
-    }
-
-    // Obtener préstamos con los filtros necesarios
-    const result = await PrestamoService.getReportePrestamos({
+    // Pasar parámetros al servicio
+    const result = await ReporteService.getReportePrestamos({
       fechaInicio,
       fechaFin,
-      periodo,
-      estado
+      estado: estado || null
     });
 
     res.status(result.success ? 200 : 400).json(result);
   } catch (error) {
-    console.error("Error en getReportePrestamos:", error);
+    console.error("Error completo en controlador:", {
+      error: error,
+      stack: error.stack,
+      message: error.message
+    });
     res.status(500).json({
       success: false,
-      message: "Error del servidor al obtener el reporte"
+      message: "Error del servidor al obtener el reporte",
+      error: error.message  // Agregamos el mensaje de error
     });
   }
 };

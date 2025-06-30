@@ -17,5 +17,6 @@ export const carrerasDisponibles = [
   { id: 15, nombre: "Ingeniería Eléctrica" },
   { id: 16, nombre: "Derecho" },
   { id: 17, nombre: "Relaciones Internacionales" },
-  { id: 18, nombre: "Psicología" }
+  { id: 18, nombre: "Psicología" },
+  { id: 19, nombre: "Otro.." }
 ];

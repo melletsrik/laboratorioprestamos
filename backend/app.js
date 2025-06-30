@@ -23,6 +23,7 @@ app.get('/api/public', (req, res) => {
 // Importa las rutas
 const authRoutes = require('./routes/auth.routes');
 const protectedRoutes = require('./routes'); // Importa routes/index.js
+const reporteRoutes = require('./routes/reporte.routes');
 
 // Rutas públicas (login)
 app.use('/api/auth', authRoutes);
@@ -32,6 +33,7 @@ app.use('/api', authMiddleware); // Aplica primero el middleware
 
 // Monta todas las rutas protegidas
 app.use('/api', protectedRoutes); // Luego las rutas protegidas
+app.use('/api/reporte', reporteRoutes);
 
 // Manejo de errores
 app.use((err, req, res, next) => {

@@ -1,7 +1,7 @@
 import { IoMdSearch } from "react-icons/io";
 import ReporteExportar from "./ReporteExportar";
 
-export default function ReporteBusqueda({filtros, onFiltrosChange, onBuscar, cargando}) {
+export default function ReporteBusqueda({filtros, onFiltrosChange, onBuscar, cargando, setMensaje}) {
   // Obtener fecha actual para límites
   const fechaActual = new Date().toISOString().split('T')[0];
 
@@ -61,17 +61,29 @@ export default function ReporteBusqueda({filtros, onFiltrosChange, onBuscar, car
           />
         </div>
         <div className="flex items-end gap-4">
-          <button
+           <button
             type="button"
-            onClick={onBuscar}
-            className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center justify-center gap-2"
+            onClick={() => {
+              if (filtros.fechaInicio && filtros.fechaFin) {
+                onBuscar();
+              } else {
+                setMensaje('Por favor selecciona un rango de fechas');
+              }
+            }}
+            disabled={cargando}
+            className="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[120px]"
           >
             <IoMdSearch />
             {cargando ? 'Cargando...' : 'Buscar'}
           </button>
-          <ReporteExportar datos={[]} filtros={filtros} />
         </div>
       </div>
+
+      {filtros.mensaje && (
+        <div className="mt-4 p-4 bg-blue-50 text-blue-700 rounded-md">
+          {filtros.mensaje}
+        </div>
+      )}
 
       {/* Rangos Rápidos */}
       <div className="flex flex-wrap gap-2 mt-4">

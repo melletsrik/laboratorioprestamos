@@ -8,6 +8,7 @@ import { LuUsers } from "react-icons/lu";
 import { LuBookMarked } from "react-icons/lu";
 import { LuUserCheck } from "react-icons/lu";
 import { LuLogOut } from "react-icons/lu";
+import { RiFileExcel2Line } from "react-icons/ri";
 export default function MenuAdmin() {
   const navegar=useNavigate(); //navega a otra ventana al hacer click al boton
   const menuItems=[ 
@@ -17,7 +18,8 @@ export default function MenuAdmin() {
     {icon: LuGraduationCap, title: " Estudiantes", description:"Registrar estudiantes", route:"/registrar-estudiante"},
     {icon: LuUsers, title: "Docentes", description:"Registrar docentes", route:"/docentes"},
     {icon: LuBookMarked, title: "Materias", description:"Registrar materias", route:"/VentanaMateria"},
-    {icon: LuUserCheck, title: "Auxiliar", description:"Registrar auxiliares", route:"/VentanaUsuario"}
+    {icon: LuUserCheck, title: "Auxiliar", description:"Registrar auxiliares", route:"/VentanaUsuario"},
+     {icon: RiFileExcel2Line, title: "Reporte de Préstamos", description:"Ver reportes de préstamos", route:"/ReportePrestamo"}
   ];
 
   return (

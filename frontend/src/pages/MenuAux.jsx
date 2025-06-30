@@ -5,7 +5,7 @@ import { LuBookOpen } from "react-icons/lu";
 import { FiPackage } from "react-icons/fi";
 import { LuGraduationCap } from "react-icons/lu";
 import { LuLogOut } from "react-icons/lu";
-
+import { RiFileExcel2Line } from "react-icons/ri";
 
 export default function MenuAux() {
   const navegar = useNavigate();
@@ -34,6 +34,12 @@ export default function MenuAux() {
       title: "Estudiantes",
       description: "Registrar estudiantes",
       route: "/registrar-estudiante"
+    },
+    {
+      icon: RiFileExcel2Line,
+      title: "Reporte de Préstamos",   description:"Ver reportes de préstamos",
+       route:"/ReportePrestamo"
+      
     }
   ];
 

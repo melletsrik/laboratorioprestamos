@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require("sequelize");
+const { Sequelize, DataTypes, Op } = require("sequelize");
 const config = require("../config/database");
 
 const sequelize = new Sequelize(config);
@@ -45,5 +45,7 @@ initializeDatabase();
 module.exports = {
   sequelize,
   Sequelize,
+  Op: Op,
   ...db,
+
 };

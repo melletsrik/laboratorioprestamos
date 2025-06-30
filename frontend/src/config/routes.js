@@ -4,7 +4,8 @@ export const ROUTES = {
     '/registrar-prestamo',
     '/prestamo-activos',
     '/material',
-    '/registrar-estudiante'
+    '/registrar-estudiante',
+    '/ReportePrestamo'
   ],
   
   // Rutas adicionales para admin
