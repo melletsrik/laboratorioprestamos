@@ -11,8 +11,8 @@ export default function ReporteTabla({ datos, cargando }) {
     });
   };
   // Obtener clase de estado
-  const obtenerClaseEstado = (estado) => {
-    switch (estado?.toLowerCase()) {
+  const obtenerClaseEstado = (estadoId) => {
+    switch (estadoId?.toLowerCase()) {
       case 'prestado':
         return 'bg-red-100 text-red-800 border-red-200';
       case 'devuelto':

@@ -3,6 +3,9 @@ import axios from "axios";
 import ReporteBusqueda from "../components/ReportePrestamo/ReporteBusqueda";
 import ReporteTabla from "../components/ReportePrestamo/ReporteTabla";
 import ReporteExportar from "../components/ReportePrestamo/ReporteExportar";
+import { LuClipboardList, LuLogOut } from "react-icons/lu";
+import { IoArrowBackCircleOutline } from "react-icons/io5";
+import { LuBookOpen } from "react-icons/lu";
 
 export default function VentanaReporte() {
   const [datos, setDatos] = useState([]);
@@ -10,14 +13,14 @@ export default function VentanaReporte() {
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [filtros, setFiltros] = useState({
-    fechaInicio: '',
+    fechaInicio: '',  // Inicialmente vacío
     fechaFin: '',
-    estado: 'todos',
+    estado: '', // Inicialmente vacío para mostrar todos
     busqueda: ''
   });
 
-  const token = localStorage.getItem("token");
- // Cargar datos del reporte
+ const token = localStorage.getItem("token");
+  // Cargar datos del reporte
   const cargarReporte = async () => {
     if (!filtros.fechaInicio || !filtros.fechaFin) {
       setMensaje('Por favor selecciona un rango de fechas');
