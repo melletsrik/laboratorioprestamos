@@ -34,12 +34,24 @@ export default function VentanaReporte() {
       if (!token) {
         throw new Error('No se encontró token de autenticación');
       }
+      // Ajustar fechas para zona horaria boliviana (UTC-4)
+      const fechaInicioBolivia = new Date(filtros.fechaInicio);
+      const fechaFinBolivia = new Date(filtros.fechaFin);
+      
+      // Ajustar para que sea UTC-4
+      fechaInicioBolivia.setHours(fechaInicioBolivia.getHours() - 4);
+      fechaFinBolivia.setHours(fechaFinBolivia.getHours() - 4);
+      
+      // Asegurarse de que las fechas estén en formato YYYY-MM-DD
+      const fechaInicioStr = fechaInicioBolivia.toISOString().split('T')[0];
+      const fechaFinStr = fechaFinBolivia.toISOString().split('T')[0];
+      
       const response = await axios.get(
         `http://localhost:4000/api/reporte/prestamos`,
         {
           params: {
-            fechaInicio: filtros.fechaInicio,
-            fechaFin: filtros.fechaFin,
+            fechaInicio: fechaInicioStr,
+            fechaFin: fechaFinStr,
             estado: filtros.estado || null
           },
           headers: {

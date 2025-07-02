@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Auth } from "../utils/auth";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import { LuLogOut } from "react-icons/lu";
+import Swal from 'sweetalert2';
+
 const estadosPrestamo = [
   { id_estado: 1, nombre: "Activo" },
   { id_estado: 3, nombre: "Devuelto" }
@@ -20,7 +22,11 @@ export default function RegistroPrestamo() {
     observaciones: "",
     id_estado: "1",
   });
-
+function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
+  Swal.fire({
+    icon: tipo, title: titulo, text:mensaje, confirmButtonColor: "#2563eb", timer: 2500, showConfirmButton:false
+  });
+}
   const [detalles, setDetalles] = useState([]);
   const [nuevoDetalle, setNuevoDetalle] = useState({
     id_material: "",
@@ -51,11 +57,28 @@ export default function RegistroPrestamo() {
   const [idSemestreSeleccionada, setIdSemestreSeleccionada] = useState("");
 
   // Fecha y hora actual
-  useEffect(() => {
-    const now = new Date();
-    const fechaHora = now.toISOString().replace('T', ' ').slice(0, -5);
-    setFechaHoraActual(fechaHora);
-  }, []);
+ useEffect(() => {
+  const now = new Date();
+  // Ajustar al horario local (Bolivia: GMT-4)
+  const opciones = {
+    timeZone: "America/La_Paz",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  };
+  const fechaHora = new Intl.DateTimeFormat("es-BO", opciones).format(now);
+
+  // Formatear a YYYY-MM-DD HH:MM:SS
+  const [fecha, hora] = fechaHora.split(', ');
+  const [dia, mes, anio] = fecha.split('/');
+  const fechaFinal = `${anio}-${mes}-${dia} ${hora}`;
+
+  setFechaHoraActual(fechaFinal);
+}, []);
 
   // Buscar estudiante por registro
   async function buscarEstudiantePorRegistro(registro) {
@@ -184,138 +207,142 @@ export default function RegistroPrestamo() {
   }, []);
 
   // Buscar material por código
-  async function buscarMaterialPorCodigo(codigo) {
-    try {
-      const token = Auth.getToken();
-      const res = await fetch(`http://localhost:4000/api/materiales/${codigo}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await res.json();
-      if (data.success) {
-        return data.data;
+async function buscarMaterialPorCodigo(codigo) {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`http://localhost:4000/api/materiales/${codigo}`, {
+      method: 'GET',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
-      return null;
-    } catch (error) {
-      console.error('Error buscando material:', error);
-      return null;
+    });
+    const data = await res.json();
+    if (data.success && data.data) {
+      // Ajustar el formato de la respuesta para que coincida con lo que esperamos
+      return {
+        id_material: data.data.id_material,
+        codigo_material: data.data.codigo_material,
+        nombre: data.data.nombre,
+        especificaciones: data.data.especificaciones || '',
+        cantidad_total: data.data.cantidad_total || 0
+      };
     }
+    return null;
+  } catch (error) {
+    console.error("Error al buscar material:", error);
+    return null;
   }
+}
+useEffect(() => {
+  let buffer = "";
+  let timeoutId;
 
-  // Manejar cambios en los detalles del material
-  function handleDetalleChange(e) {
-    const { name, value } = e.target;
-    let nuevo = { ...nuevoDetalle, [name]: name === "cantidad" ? Number(value) : value };
-    if (name === "codigo_material") {
-      buscarMaterialPorCodigo(value).then(material => {
+  const handleKeyPress = (e) => {
+    // Solo procesar si el input de código está en foco
+    if (document.activeElement.name !== "codigo_material") return;
+
+    // Ignorar la tecla Enter
+    if (e.key === 'Enter') return;
+
+    // Solo permitir números y letras (evitar caracteres especiales)
+    if (!/[0-9a-zA-Z]/.test(e.key)) return;
+
+    buffer += e.key;
+
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(async () => {
+      // Si hay algún texto en el buffer, intentar buscar el material
+      if (buffer.trim()) {
+        const codigoEscaneado = buffer.trim();
+        const material = await buscarMaterialPorCodigo(codigoEscaneado);
+        
         if (material) {
-          setNuevoDetalle({
-            ...nuevo,
-            id_material: material.id_material,
+          // Actualizamos el código y la cantidad disponible del material
+          setNuevoDetalle((prev) => ({
+            ...prev,
             codigo_material: material.codigo_material,
-            nombre: material.nombre,
-            especificaciones: material.especificaciones,
-          });
+            cantidad: 1, // Mantenemos la cantidad en 1 hasta que el usuario la cambie manualmente
+            cantidad_disponible: material.cantidad_total || 0
+          }));
+          // Limpiar el buffer pero no el input
+          buffer = "";
         } else {
-          setNuevoDetalle({
-            ...nuevo,
-            id_material: "",
-            nombre: "",
-            especificaciones: "",
-          });
+          alert("Material no encontrado para el código escaneado.");
+          buffer = "";
         }
-      });
-    } else {
-      setNuevoDetalle(nuevo);
-    }
-  }
-
-  // Manejar escaneo de código de barras desde teclado
-  useEffect(() => {
-    const handleKeyPress = async (e) => {
-      // Solo procesar si el input de código está en foco
-      if (document.activeElement.name === 'codigo_material') {
-        // Limpiar el timeout anterior si existe
-        if (ultimoTimeout) {
-          clearTimeout(ultimoTimeout);
-        }
-
-        // Establecer nuevo timeout
-        const timeout = setTimeout(async () => {
-          const codigo = document.activeElement.value;
-          
-          // Verificar si el código tiene al menos 8 caracteres
-          if (codigo.length >= 8) {
-            setIsLoading(true);
-            try {
-              const material = await buscarMaterialPorCodigo(codigo);
-              if (material) {
-                setNuevoDetalle({
-                  id_material: material.id_material,
-                  codigo_material: material.codigo_material,
-                  nombre: material.nombre,
-                  especificaciones: material.especificaciones,
-                  cantidad: 1
-                });
-                document.activeElement.value = ""; // Limpiar el input
-              } else {
-                alert("Material no encontrado");
-              }
-            } catch (error) {
-              console.error('Error buscando material:', error);
-              alert('Error al buscar el material');
-            } finally {
-              setIsLoading(false);
-            }
-          }
-        }, 200); // Aumentamos el delay a 200ms para mayor precisión
-
-        setUltimoTimeout(timeout);
       }
-    };
+    }, 100); // Ajustado a 100ms para mejor detección
+  };
 
     // Agregar el listener de eventos
     document.addEventListener('keydown', handleKeyPress);
-    return () => {
-      document.removeEventListener('keydown', handleKeyPress);
-    };
-  }, [ultimoTimeout]);
+  return () => {
+    document.removeEventListener("keydown", handleKeyPress);
+    clearTimeout(timeoutId);
+  };
+}, []);
 
   // Agregar detalle a la lista
-  function agregarDetalle() {
-    if (
-      !nuevoDetalle.id_material ||
-      !nuevoDetalle.codigo_material ||
-      !nuevoDetalle.nombre ||
-      !nuevoDetalle.especificaciones ||
-      !nuevoDetalle.cantidad ||
-      nuevoDetalle.cantidad < 1
-    ) {
-      alert("Completa todos los campos del material antes de agregar.");
+  async function agregarDetalle() {
+    if (!nuevoDetalle.codigo_material || nuevoDetalle.cantidad <= 0) {
+
+      mostrarAlerta("error", "Falta material", "Por favor, ingrese un código de material válido y una cantidad mayor a 0'");
+      
       return;
     }
-    setDetalles((prev) => {
-      const idx = prev.findIndex(
-        (d) => d.id_material === nuevoDetalle.id_material
-      );
-      if (idx !== -1) {
-        const actualizados = [...prev];
-        actualizados[idx].cantidad += nuevoDetalle.cantidad;
-        return actualizados;
+
+    try {
+      // Buscar el material completo usando el código
+      const material = await buscarMaterialPorCodigo(nuevoDetalle.codigo_material);
+      if (!material) {
+        alert('Material no encontrado en el sistema');
+        return;
       }
-      return [...prev, nuevoDetalle];
-    });
-    setNuevoDetalle({
-      id_material: "",
-      codigo_material: "",
-      nombre: "",
-      especificaciones: "",
-      cantidad: 1,
-      descripcion_devolucion: ""
-    });
+
+      // Verificar si ya existe un detalle con el mismo material
+      const idx = detalles.findIndex(d => d.codigo_material === nuevoDetalle.codigo_material);
+      if (idx !== -1) {
+        // Si existe, actualizar la cantidad
+        const actualizados = [...detalles];
+        actualizados[idx].cantidad += nuevoDetalle.cantidad;
+        setDetalles(actualizados);
+      } else {
+        // Si no existe, agregar nuevo detalle con todos los datos del material
+        setDetalles([...detalles, {
+          id_material: material.id_material,
+          codigo_material: material.codigo_material,
+          nombre: material.nombre,
+          especificaciones: material.especificaciones || '',
+          cantidad: nuevoDetalle.cantidad,
+          cantidad_disponible: material.cantidad_total || 0,
+          descripcion_devolucion: ''
+        }]);
+      }
+
+      // Limpiar el formulario de detalle
+      setNuevoDetalle({
+        id_material: "",
+        codigo_material: "",
+        nombre: "",
+        especificaciones: "",
+        cantidad: 1,
+        descripcion_devolucion: ""
+      });
+    } catch (error) {
+      console.error('Error al agregar detalle:', error);
+      alert('Error al procesar el material. Por favor, intente nuevamente.');
+    }
   }
+  function handleDetalleChange(e) {
+  const { name, value } = e.target;
+
+  setNuevoDetalle((prev) => ({
+    ...prev,
+    [name]: name === "cantidad" ? parseInt(value, 10) || 1 : value,
+  }));
+}
+
 
   // Enviar formulario
   async function handleSubmit(e) {
@@ -344,6 +371,7 @@ export default function RegistroPrestamo() {
     // Validar que los campos manuales estén completos
     if (!idMateriaSeleccionada || !idModuloSeleccionado || !idSemestreSeleccionada) {
       alert("Completa todos los campos de materia, módulo y semestre.");
+      
       return;
     }
 
@@ -353,7 +381,7 @@ export default function RegistroPrestamo() {
     const token = localStorage.getItem("token");
 
     if (!idUsuarioEntrega) {
-      alert("No se pudo obtener el usuario que entrega el préstamo.");
+       mostrarAlerta('info', 'No se pudo obtener el usuario que entrega el préstamo.');
       return;
     }
     const prestamoData = {
@@ -439,7 +467,7 @@ const devolucionData = {
             registro: "",
             nombres: "",
             apellidos: "",
-            observaciones: "",
+           observaciones: "",
             id_estado: "1",
           }));
           setDetalles([]);
@@ -458,9 +486,12 @@ const devolucionData = {
       } else {
         console.error("Error del backend:", data);
         alert(`Error al registrar el préstamo:\n${data.error || JSON.stringify(data)}`);
+        mostrarAlerta('error', 'Error ', 'Error al registrar el préstamo:\n${data.error || JSON.stringify(data)');
+
       }
-    } catch (err) {
-      alert("Error de red al registrar el préstamo.");
+    } catch (err) {   
+      mostrarAlerta("warning", "Alert", 'Error de red al registrar el préstamo.');
+
     }
   }
 
@@ -721,6 +752,7 @@ const devolucionData = {
                 type="text"
                 id="codigo_material"
                 name="codigo_material"
+                  onChange={handleDetalleChange}
                 value={nuevoDetalle.codigo_material}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -748,6 +780,7 @@ const devolucionData = {
                 required
               />
             </div>
+
             <button
               type="button"
               onClick={agregarDetalle}
