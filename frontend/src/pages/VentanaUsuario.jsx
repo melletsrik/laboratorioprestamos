@@ -23,7 +23,7 @@ const token = Auth.getToken("token");
   }, [token, navegar]);
 
   
- // Función para cargar auxiliares desde el backend
+ // Función para cargar usuarios desde el backend
  const cargarUsuarios = async () => {
     setIsLoading(true);
     try {
@@ -67,49 +67,104 @@ const token = Auth.getToken("token");
     }
   }, [mensaje]);
   // Función para agregar usuario desdr modal
-const AgregarUsuario = async (nuevoUsuario) => {
-  try {
-    const token = Auth.getToken();
-    if (!token) {
-      setMensaje('No hay sesión activa');
-      return;
-    }
-
-    const response = await axios.post(
-      "http://localhost:4000/api/usuarios",
-      nuevoUsuario,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+  const AgregarUsuario = async (nuevoUsuario) => {
+    try {
+      const token = Auth.getToken();
+      if (!token) {
+        setMensaje('No hay sesión activa');
+        return false;
       }
-    );
 
-    if (response.data.success) {
-      // Refrescar la lista de usuarios
-      await cargarUsuarios();
-      setMensaje('Usuario agregado correctamente');
-      return true;
-    } else {
-      setMensaje(response.data.message || 'Error al agregar usuario');
-      return false;
-    }
-  } catch (error) {
-    console.error("Error al agregar usuario:", error);
-    setMensaje(`Error al agregar usuario: ${error.response?.data?.message || error.message}`);
-    return false;
-  }
-};
-// Función para cambiar el estado del usuario
-const cambiarEstado = async (idUsuario, nuevoEstado) => {
-  try {
-    const token = Auth.getToken();
-    if (!token) {
-      setMensaje('No hay sesión activa');
-      return;
-    }
-//lo q espera del backend
+      // Log the incoming data for debugging
+      console.log("Datos recibidos del formulario:", nuevoUsuario);
+
+        // Validate required fields - use 'password_' to match the form field name
+        const camposRequeridos = ['nombre', 'apellido', 'nombre_usuario', 'password_', 'rol'];
+        const camposFaltantes = camposRequeridos.filter(campo => {
+          const value = nuevoUsuario[campo];
+          return value === undefined || value === null || value === '';
+        });
+
+
+        if (camposFaltantes.length > 0) {
+          const mensajeError = `Faltan campos requeridos: ${camposFaltantes.join(', ')}`;
+          console.error(mensajeError);
+          setMensaje(mensajeError);
+          return false;
+        }
+
+
+      // Update the datosUsuario object to use the correct field names
+      const datosUsuario = {
+        nombre: String(nuevoUsuario.nombre || '').trim(),
+        apellido: String(nuevoUsuario.apellido || '').trim(),
+        nombre_usuario: String(nuevoUsuario.nombre_usuario || '').trim(),
+        password_: nuevoUsuario.password_?.trim() || '',
+        id_rol: Number(nuevoUsuario.rol),  // Map rol to id_rol and ensure it's a number
+        estado: Boolean(nuevoUsuario.estado)
+      };
+
+        console.log("Datos a enviar al servidor:", JSON.stringify(datosUsuario, null, 2));
+
+        // Make the API call
+        const response = await axios({
+          method: 'post',
+          url: 'http://localhost:4000/api/usuarios',
+          data: datosUsuario,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          validateStatus: (status) => status < 500 // Don't throw for 4xx errors
+        });
+
+        console.log("Respuesta del servidor:", response.data);
+
+        if (response.status === 201 || response.data.success) {
+          await cargarUsuarios();
+          setMensaje('Usuario agregado correctamente');
+          return true;
+        } else {
+          const errorMsg = response.data?.message || 
+                          response.data?.error || 
+                          'Error desconocido al agregar usuario';
+          console.error("Error del servidor:", errorMsg);
+          setMensaje(`Error: ${errorMsg}`);
+          return false;
+        }
+      } catch (error) {
+        console.error("Error en AgregarUsuario:", error);
+        
+        let errorMessage = 'Error al procesar la solicitud';
+        if (error.response) {
+          // Server responded with a status code outside 2xx
+          console.error("Datos del error:", error.response.data);
+          errorMessage = error.response.data?.message || 
+                        error.response.data?.error || 
+                        `Error ${error.response.status}: ${error.response.statusText}`;
+        } else if (error.request) {
+          // Request was made but no response received
+          console.error("No se recibió respuesta del servidor:", error.request);
+          errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión.";
+        } else {
+          // Something happened in setting up the request
+          console.error("Error en la configuración de la petición:", error.message);
+          errorMessage = `Error: ${error.message}`;
+        }
+        
+        setMensaje(errorMessage);
+        return false;
+      }
+    };
+  // Función para cambiar el estado del usuario
+  const cambiarEstado = async (idUsuario, nuevoEstado) => {
+    try {
+      const token = Auth.getToken();
+      if (!token) {
+        setMensaje('No hay sesión activa');
+        return;
+      }
+  //lo q espera del backend
     const response = await axios.put(`http://localhost:4000/api/usuarios/${idUsuario}/estado`,
       { estado: nuevoEstado },
       {
@@ -161,9 +216,30 @@ return (
               Volver al Menú
             </button>
             <button
-              onClick={() => {
-                localStorage.clear();
-                navegar("/");
+              onClick={async () => {
+                try {
+                  // Clear local storage
+                  localStorage.clear();
+                  
+                  // Make API call to invalidate the token on the server if needed
+                  const token = Auth.getToken();
+                  if (token) {
+                    await axios.post('http://localhost:4000/api/auth/logout', {}, {
+                      headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                  }
+                  
+                  // Clear any auth state
+                  Auth.logout();
+                  
+                  // Redirect to login page
+                  navegar('/login');
+                } catch (error) {
+                  console.error('Error during logout:', error);
+                  // Still clear local storage and redirect even if API call fails
+                  Auth.logout();
+                  navegar('/login');
+                }
               }}
               className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
             >
@@ -181,7 +257,7 @@ return (
                   </div>
                   <div>
                     <h1 className="text-3xl font-bold text-gray-900">
-                      Lista de Materiales
+                      Lista de Auxiliares
                     </h1>
                   </div>
                 </div>

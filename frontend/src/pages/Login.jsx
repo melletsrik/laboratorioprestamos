@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import logo2 from "../assets/logo2.png";
 import Button from "../components/Button";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Auth } from "../utils/auth";
 
 
 export default function Login() {
@@ -15,37 +16,61 @@ export default function Login() {
 
   const iniciarSesion = async (e) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
+    
+    if (!nombreUsuario || !contrasena) {
+      setError("Por favor ingrese usuario y contraseña");
+      return;
+    }
+    
     try {
       const respuesta = await axios.post(
         "http://localhost:4000/api/auth/login",
-        {
-          nombreUsuario,
-          password: contrasena,
-        },
-        { headers: { "Content-Type": "application/json" } }
+        { nombreUsuario, password: contrasena },
+        { 
+          headers: { "Content-Type": "application/json" },
+          timeout: 10000 // 10 seconds timeout
+        }
       );
 
       if (respuesta.data.token && respuesta.data.usuario) {
-        // Guardar token y datos de usuario
+        // Guardar token y datos de usuario usando el Auth utility
         localStorage.setItem("token", respuesta.data.token);
         localStorage.setItem("user", JSON.stringify(respuesta.data.usuario));
-         localStorage.setItem("rol", respuesta.data.usuario.rol);
+        localStorage.setItem("rol", respuesta.data.usuario.rol);
+        
+        // Actualizar la caché de autenticación
+        Auth.init();
 
         // Redirigir según el rol
-        if (respuesta.data.usuario.rol === "Administrativo") {
-          navegar("/menu-admin");
-        } else if (respuesta.data.usuario.rol === "Auxiliar") {
-          navegar("/menu-aux");
-        } else {
-          // Rol no reconocido
-          setError("No tienes permisos para acceder al sistema");
-          localStorage.clear();
-        }
+        const redirectPath = respuesta.data.usuario.rol === "Administrativo" 
+          ? "/menu-admin" 
+          : "/menu-aux";
+          
+        navegar(redirectPath, { replace: true });
       }
     } catch (error) {
-      setError("Usuario o contraseña incorrectos");
       console.error("Error en login:", error);
-      localStorage.clear();
+      
+      if (error.response) {
+        // El servidor respondió con un estado de error
+        if (error.response.status === 401) {
+          setError("Usuario o contraseña incorrectos");
+        } else if (error.response.status >= 500) {
+          setError("Error del servidor. Por favor, intente más tarde.");
+        } else {
+          setError("Error al iniciar sesión. Por favor, intente nuevamente.");
+        }
+      } else if (error.request) {
+        // La petición fue hecha pero no hubo respuesta
+        setError("No se pudo conectar al servidor. Verifique su conexión a internet.");
+      } else {
+        // Algo pasó en la configuración de la petición
+        setError("Error al procesar la solicitud. Por favor, intente nuevamente.");
+      }
+      
+      // Limpiar datos de autenticación en caso de error
+      Auth.clearToken();
     }
   };
 
@@ -86,7 +111,13 @@ export default function Login() {
             </label>
             <div className="relative">
               <input
-              type={showPassword ? <FaEyeSlash  className="h-5 w-5" /> : <FaEye className="h-5 w-5" />} placeholder="Ingresa tu contraseña" value={contrasena} onChange={(e) => setContrasena(e.target.value)} className="w-full px-4 py-2.5 mt-1 border rounded-md  focus:outline-none focus:ring-2 focus:ring-red-100 transition pr-12" style={{ borderColor: "var(--color-primary)" }} required
+              type={showPassword ? "text" : "password"}
+              placeholder="Ingresa tu contraseña"
+              value={contrasena}
+              onChange={(e) => setContrasena(e.target.value)}
+              className="w-full px-4 py-2.5 mt-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-100 transition pr-12"
+              style={{ borderColor: "var(--color-primary)" }}
+              required
             />
             <button
       type="button"

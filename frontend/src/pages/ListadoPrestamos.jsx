@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Auth } from "../utils/auth";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import { LuLogOut } from "react-icons/lu";
+import PrestamoBusqueda from "../components/GestionarPrestamo/PrestamoBusqueda";
 
 export default function ListadoPrestamos() {
   const [aPrestamos, setAPrestamos] = useState([]);
   const [lLoading, setLLoading] = useState(true);
   const [cError, setCError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const token = Auth.getToken("token");
   const navegar = useNavigate();
 
@@ -50,15 +52,35 @@ export default function ListadoPrestamos() {
         }
         const data = await response.json();
         console.log('Respuesta del backend:', data);
-        if (data.success && data.data) {
-          console.log('Préstamos recibidos:', data.data);
-          console.log('Préstamos activos:', data.data.filter(p => p.id_estado === '1'));
-          console.log('Primer préstamo:', data.data[0]);
-          console.log('Estado del primer préstamo:', typeof data.data[0].id_estado, data.data[0].id_estado);
-          setAPrestamos(data.data);
+        
+        if (!data) {
+          throw new Error('No se recibieron datos del servidor');
+        }
+        
+        if (data.success && Array.isArray(data.data)) {
+          // Asegurarse de que todos los préstamos tengan un id_estado
+          const prestamosConEstado = data.data.map(prestamo => ({
+            ...prestamo,
+            id_estado: prestamo.id_estado || '0' // Valor por defecto si no tiene estado
+          }));
+          
+          console.log('Préstamos recibidos:', prestamosConEstado);
+          console.log('Préstamos activos:', prestamosConEstado.filter(p => p.id_estado === '1'));
+          
+          if (prestamosConEstado.length > 0) {
+            console.log('Primer préstamo:', prestamosConEstado[0]);
+            console.log('Estado del primer préstamo:', 
+              typeof prestamosConEstado[0].id_estado, 
+              prestamosConEstado[0].id_estado
+            );
+          } else {
+            console.log('No hay préstamos para mostrar');
+          }
+          
+          setAPrestamos(prestamosConEstado);
         } else {
           console.error('Error en la respuesta del backend:', data);
-          setCError('Error al cargar los préstamos');
+          setCError(data.message || 'Error al cargar los préstamos');
         }
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -79,6 +101,10 @@ export default function ListadoPrestamos() {
     return () => controller.abort();
   }, []);
 
+  const f_irAEditar = (idPrestamo) => {
+    navegar(`/registrar-prestamo?editar=${idPrestamo}`);
+  };
+
   const f_irADevolver = (p_prestamo) => {
     // Obtener el usuario actual
     const usuarioActual = JSON.parse(localStorage.getItem('user'));
@@ -94,7 +120,7 @@ export default function ListadoPrestamos() {
       descripcion: '', // Campo opcional para descripción
       id_estado: 3, // Estado "Devuelto"
       fecha_devolucion: new Date().toISOString(),
-      semestre: p_prestamo.semestre?.nombre?? "",
+      semestre: p_prestamo.semestre?.nombre || "",
       id_materia: p_prestamo.materia?.id_materia,
       id_docente: p_prestamo.docente?.id_docente,
       id_modulo: p_prestamo.id_modulo,
@@ -125,31 +151,104 @@ export default function ListadoPrestamos() {
     return date.toLocaleDateString("es-PE");
   };
 
+  // Obtener clase de estado
+  const obtenerClaseEstado = (estadoId) => {
+    switch (estadoId) {
+      case 1:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 2:
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 3:
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  // Obtener texto de estado
+  const obtenerTextoEstado = (estadoId) => {
+    switch (estadoId) {
+      case 1:
+        return 'Prestado';
+      case 2:
+        return 'Parcial';
+      case 3:
+        return 'Devuelto';
+      default:
+        return 'N/A';
+    }
+  };
+
+  // Formatear fecha
+  const formatearFecha = (fecha) => {
+    if (!fecha) return 'N/A';
+    return new Date(fecha).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Filtrar préstamos basados en el término de búsqueda
+  const filteredPrestamos = useMemo(() => {
+    if (lLoading || !aPrestamos) return [];
+    if (!searchTerm) return aPrestamos.filter(p => String(p.id_estado) === '1');
+    
+    const searchLower = searchTerm.toLowerCase();
+    return aPrestamos.filter(p => 
+      String(p.id_estado) === '1' && (
+        (p.estudiante?.persona?.nombre?.toLowerCase().includes(searchLower)) ||
+        (p.estudiante?.persona?.apellido?.toLowerCase().includes(searchLower)) ||
+        (p.estudiante?.Registro?.toLowerCase().includes(searchLower)) ||
+        (p.materia?.nombre?.toLowerCase().includes(searchLower)) ||
+        (p.docente?.persona?.nombre?.toLowerCase().includes(searchLower)) ||
+        (p.id_modulo?.toString().toLowerCase().includes(searchLower)) ||
+        (p.detalles?.some(d => d.material?.nombre?.toLowerCase().includes(searchLower)))
+      )
+    );
+  }, [aPrestamos, searchTerm, lLoading]);
+
   if (lLoading) {
-    return <p className="p-6 text-gray-600 italic">Cargando préstamos...</p>;
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <div className="flex justify-center items-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+          <span className="ml-3 text-gray-600">Cargando préstamos...</span>
+        </div>
+      </div>
+    );
   }
 
   if (cError) {
     return (
-      <p className="p-6 text-red-600 font-semibold">
-        Ocurrió un error: {cError}
-      </p>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <div className="text-center text-red-600">
+          <h3 className="text-lg font-medium mb-2">Ocurrió un error</h3>
+          <p>{cError}</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="p-6">
-<div className="flex items-center justify-between mb-4">
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
             <button
-                onClick={() => {
+              onClick={() => {
                 const rol = localStorage.getItem("rol");
                 if (rol === "Administrativo") {
                   navegar("/menu-admin");
                 } else {
                   navegar("/menu-aux");
                 }
-              }}  className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
-              >
+              }}  
+              className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
+            >
               <IoArrowBackCircleOutline className="w-6 h-6" />
               Volver al Menú
             </button>
@@ -164,88 +263,130 @@ export default function ListadoPrestamos() {
               Cerrar Sesión
             </button>
           </div>
-      <h2
-        className="text-2xl font-bold mb-6"
-        style={{ color: "var(--color-primary)" }}
-      >
-        Préstamos activos
-      </h2>
+        </div>
+      </div>
 
-      <div
-        className="overflow-x-auto rounded-md shadow-md"
-        style={{
-          borderColor: "var(--color-primary)",
-          borderWidth: "1px",
-          borderStyle: "solid",
-        }}
-      >
-        <table className="w-full text-sm text-left border-collapse">
-          <thead
-            style={{
-              backgroundColor: "var(--color-primary-light)",
-              color: "black",
-            }}
-          >
-            <tr>
-             
-              <th className="px-4 py-2">NRO </th>
-              <th className="px-4 py-2">REGISTRO</th>
-              <th className="px-4 py-2">ESTUDIANTE</th>
-              <th className="px-4 py-2">FECHA PRÉSTAMO</th>
-              <th className="px-4 py-2">MATERIA</th>
-              <th className="px-4 py-2">DOCENTE</th>
-              <th className="px-4 py-2">MÓDULO</th>
-              <th className="px-4 py-2">AUXILIAR ENTREGO</th>
-              <th className="px-4 py-2">NOMBRE MATERIAL</th>
-              <th className="px-4 py-2">CANTIDAD </th>
-            </tr>
-          </thead>
-          <tbody>
-            {aPrestamos.filter(p => String(p.id_estado) === '1').map((p, i) => {
-              const cNombreCompleto = `${p.estudiante?.persona?.nombre ?? "N/A"} ${p.estudiante?.persona?.apellido ?? ""}`;
-              console.log('Préstamo:', p);
-              console.log('Estado:', p.id_estado);
-              return (
-                <tr
-                  key={p.id_prestamo}
-                  style={{
-                    backgroundColor: i % 2 === 0 ? "transparent" : "rgba(234, 178, 178, 0.23)",
-                    transition: "background-color 0.3s",
-                    cursor: "default",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "rgba(158, 155, 153, 0.39)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      i % 2 === 0 ? "transparent" : "rgb(243, 243, 243)")
-                  }
-                >
-                  <td className="px-4 py-2">{p.id_prestamo ?? "N/A"}</td>
-                  <td className="px-4 py-2">{p.estudiante?.Registro ?? "N/A"}</td>
-                  <td className="px-4 py-2">{cNombreCompleto}</td>
-                  <td className="px-4 py-2">{f_formatDate(p.fecha_prestamo)}</td>
-                  <td className="px-4 py-2">{p.materia?.nombre ?? "N/A"}</td>
-                  <td className="px-4 py-2">{p.docente?.persona?.nombre ?? "N/A"}</td>
-                  <td className="px-4 py-2">{p.id_modulo ?? "N/A"}</td>
-                  <td className="px-4 py-2">{p.usuarioEntrega?.nombre + ' ' + p.usuarioEntrega?.apellido ?? "N/A"}</td>
-                  <td className="px-4 py-2">{p.detalles[0]?.material?.nombre ?? "N/A"}</td>
-                  <td className="px-4 py-2">{p.detalles[0]?.cantidad ?? "N/A"}</td>
-                  <td className="px-4 py-2 text-center">
-                    <button
-                      onClick={() => f_irADevolver(p)}
-                      type="button"
-                      style={{ backgroundColor: "var(--color-primary)" }}
-                      className="text-white text-1xl px-4 py-2 rounded hover:brightness-90 transition"
-                    >
-                      Devolución
-                    </button>
-                  </td>
+      {/* Contenido principal */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Título y búsqueda */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-red-100 rounded-xl">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+              </svg>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900">Lista de Préstamos Activos</h1>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="w-full">
+              <PrestamoBusqueda 
+                onBuscar={setSearchTerm} 
+                placeholder="Buscar por nombre, registro, materia..."
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NRO</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REGISTRO</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESTUDIANTE</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FECHA PRÉSTAMO</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MATERIA</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOCENTE</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MÓDULO</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ENTREGADO POR</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MATERIAL</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CANTIDAD</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESTADO</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACCIÓN</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredPrestamos.map((p) => {
+                  const cNombreCompleto = `${p.estudiante?.persona?.nombre || ''} ${p.estudiante?.persona?.apellido || ''}`.trim() || 'N/A';
+                  const nombreMaterial = p.detalles?.[0]?.material?.nombre || 'N/A';
+                  const cantidad = p.detalles?.[0]?.cantidad || 'N/A';
+                  const nombreDocente = p.docente?.persona?.nombre || 'N/A';
+                  const nombreEntrega = p.usuarioEntrega?.nombre && p.usuarioEntrega?.apellido 
+                    ? `${p.usuarioEntrega.nombre} ${p.usuarioEntrega.apellido}` 
+                    : 'N/A';
+
+                  return (
+                    <tr key={p.id_prestamo} className="hover:bg-gray-50">
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {p.id_prestamo || 'N/A'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {p.estudiante?.Registro || 'N/A'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {cNombreCompleto}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatearFecha(p.fecha_prestamo)}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {p.materia?.nombre || 'N/A'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {nombreDocente}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {p.id_modulo || 'N/A'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {nombreEntrega}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {nombreMaterial}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {cantidad}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span 
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${obtenerClaseEstado(Number(p.id_estado))}`}
+                        >
+                          {obtenerTextoEstado(Number(p.id_estado))}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => f_irAEditar(p.id_prestamo)}
+                          type="button"
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => f_irADevolver(p)}
+                          type="button"
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                        >
+                          Devolver
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filteredPrestamos.length === 0 && (
+                  <tr>
+                    <td colSpan="12" className="px-4 py-4 text-center text-sm text-gray-500">
+                      No se encontraron préstamos activos
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

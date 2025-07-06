@@ -10,36 +10,47 @@ export default function ModalUsuario({ isOpen, onClose, onAgregarUsuario }) {
 
   const agregar = async (e) => {
     e.preventDefault();
-    // rellenar campos
-    if (!nombre || !apellido || !nombreUsuario || !password) {
-      alert("Rellene todos los campos");
+
+    // Validar campos requeridos
+    if (!nombre || !apellido || !nombreUsuario || !password || !rol) {
+      alert("Por favor complete todos los campos");
       return;
     }
-    
-    // Convertir el rol a número y validar
-   const rolNumero = Number(rol);
-    if (![1, 2].includes(rolNumero)) {
-      alert("El rol debe ser Administrador (1) o Auxiliar (2).");
-     return;
-    }
-    // Enviar datos al backend
-    const registrado= await onAgregarUsuario({ 
-     nombre: nombre,
-     apellido: apellido,
-     nombre_usuario: nombreUsuario,
-     password_: password,
-     rol: rolNumero 
-    });
-    if (registrado) {
-      onClose();
-      // Limpiar campos si lo deseas
-      setNombre("");
-      setApellido("");
-      setNombreUsuario("");
-      setPassword("");
-      setRol(2);
+
+    const usuario = {
+      nombre: nombre.trim(),
+      apellido: apellido.trim(),
+      nombre_usuario: nombreUsuario.trim(),
+      password_: password,
+      rol: Number(rol),
+      estado: true
+    };
+
+    try {
+      // Llamar a la función onAgregarUsuario pasada como prop
+      if (typeof onAgregarUsuario === 'function') {
+        const resultado = await onAgregarUsuario(usuario);
+        
+        if (resultado) {
+          // Si se agregó correctamente, limpiar el formulario y cerrar el modal
+          setNombre("");
+          setApellido("");
+          setNombreUsuario("");
+          setPassword("");
+          setRol(2);
+          onClose();
+        }
+      } else {
+        console.error('La función onAgregarUsuario no está definida');
+        alert('Error: No se pudo procesar la solicitud');
+      }
+    } catch (error) {
+      console.error("Error al agregar usuario:", error);
+      // El manejo de errores ya se realiza en la función AgregarUsuario del componente padre
+      // No es necesario hacer nada adicional aquí ya que el mensaje de error ya se mostró
     }
   };
+
    
   if(!isOpen) return null;
 

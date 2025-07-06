@@ -9,6 +9,8 @@ import { LuBookMarked } from "react-icons/lu";
 import { LuUserCheck } from "react-icons/lu";
 import { LuLogOut } from "react-icons/lu";
 import { RiFileExcel2Line } from "react-icons/ri";
+import { Auth } from '../utils/auth';
+
 export default function MenuAdmin() {
   const navegar=useNavigate(); //navega a otra ventana al hacer click al boton
   const menuItems=[ 
@@ -44,9 +46,35 @@ export default function MenuAdmin() {
             </button>
           ))}
         </div>
-        <div className="flex justify-end mt-10 ">
-          <button onClick={()=> {  localStorage.clear(); navegar("/"); }}
-          className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"> <LuLogOut className="w-5 h-5"></LuLogOut> Cerrar Sesion</button>
+        <div className="flex justify-end mt-10">
+          <button 
+            onClick={async () => { 
+              try {
+                // Clear local storage
+                localStorage.clear();
+                
+                // Clear auth token
+                if (typeof Auth.logout === 'function') {
+                  Auth.logout();
+                } else if (typeof Auth.clearToken === 'function') {
+                  Auth.clearToken();
+                }
+                
+                // Redirect to login page
+                navegar('/login');
+                
+                // Force a full page reload to clear any remaining state
+                window.location.reload();
+              } catch (error) {
+                console.error('Error during logout:', error);
+                // Still try to redirect even if there's an error
+                navegar('/login');
+              }
+            }}
+            className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+          >
+            <LuLogOut className="w-5 h-5" /> Cerrar Sesión
+          </button>
         </div>
       </main>
       

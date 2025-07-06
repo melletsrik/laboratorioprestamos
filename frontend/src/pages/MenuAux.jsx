@@ -6,6 +6,7 @@ import { FiPackage } from "react-icons/fi";
 import { LuGraduationCap } from "react-icons/lu";
 import { LuLogOut } from "react-icons/lu";
 import { RiFileExcel2Line } from "react-icons/ri";
+import { Auth } from '../utils/auth';
 
 export default function MenuAux() {
   const navegar = useNavigate();
@@ -67,13 +68,12 @@ export default function MenuAux() {
         <div className="flex justify-end mt-10">
           <button
             onClick={() => {
-              localStorage.clear();
-              navegar("/");
+              Auth.clearToken();
+              navegar('/login');
             }}
             className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
           >
-            <LuLogOut className="w-5 h-5"></LuLogOut>
-            Cerrar Sesion
+            <LuLogOut className="w-5 h-5" /> Cerrar Sesión
           </button>
         </div>
       </main>
