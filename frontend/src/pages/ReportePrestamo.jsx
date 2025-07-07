@@ -7,6 +7,7 @@ import ReporteExportar from "../components/ReportePrestamo/ReporteExportar";
 import { LuClipboardList, LuLogOut } from "react-icons/lu";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import { RiFileExcel2Line } from "react-icons/ri";
+
 export default function VentanaReporte() {
   const navegar = useNavigate();
   const [datos, setDatos] = useState([]);
@@ -34,17 +35,9 @@ export default function VentanaReporte() {
       if (!token) {
         throw new Error('No se encontró token de autenticación');
       }
-      // Ajustar fechas para zona horaria boliviana (UTC-4)
-      const fechaInicioBolivia = new Date(filtros.fechaInicio);
-      const fechaFinBolivia = new Date(filtros.fechaFin);
-      
-      // Ajustar para que sea UTC-4
-      fechaInicioBolivia.setHours(fechaInicioBolivia.getHours() - 4);
-      fechaFinBolivia.setHours(fechaFinBolivia.getHours() - 4);
-      
-      // Asegurarse de que las fechas estén en formato YYYY-MM-DD
-      const fechaInicioStr = fechaInicioBolivia.toISOString().split('T')[0];
-      const fechaFinStr = fechaFinBolivia.toISOString().split('T')[0];
+      // Usar las fechas directamente sin ajustes
+      const fechaInicioStr = filtros.fechaInicio;
+      const fechaFinStr = filtros.fechaFin;
       
       const response = await axios.get(
         `http://localhost:4000/api/reporte/prestamos`,

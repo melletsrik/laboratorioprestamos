@@ -45,7 +45,7 @@ datos.forEach(item => {
         Registro: item.estudiante?.Registro || 'N/A',
         Docente: item.docente?.nombres ? `${item.docente.nombres} ${item.docente.apellidos}` : 'N/A',
         Materia: item.materia?.nombre || 'N/A',
-        Módulo: item.modulo?.id_modulo || 'N/A',
+        Módulo: item.modulo?.id_modulo ? item.modulo.id_modulo.toString() : 'N/A',
         Semestre: item.semestre?.id_semestre || 'N/A',
         Material: detalle.material?.nombre || 'N/A',
         Código_Material: detalle.material?.codigo_material || 'N/A',

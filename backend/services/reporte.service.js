@@ -26,21 +26,25 @@ const {
           Detalle_Prestamo: Detalle_Prestamo !== undefined,
           Material: Material !== undefined
         });
-  
-        // Crear fechas con zona horaria boliviana (UTC-4)
-        const fechaInicioBolivia = new Date(filtros.fechaInicio);
-        const fechaFinBolivia = new Date(filtros.fechaFin);
+
+        // Manejar fechas directamente con timezone de Bolivia
+        const fechaInicio = new Date(filtros.fechaInicio);
+        const fechaFin = new Date(filtros.fechaFin);
         
-        // Ajustar para que sea UTC-4
-        fechaInicioBolivia.setHours(fechaInicioBolivia.getHours() - 4);
-        fechaFinBolivia.setHours(fechaFinBolivia.getHours() - 4);
+        // Ajustar las fechas para incluir todo el día
+        fechaInicio.setHours(0, 0, 0, 0);
+        fechaFin.setHours(23, 59, 59, 999);
         
+        // Convertir a timezone de Bolivia
+        fechaInicio.setUTCHours(fechaInicio.getHours() - 4);
+        fechaFin.setUTCHours(fechaFin.getHours() - 4);
+
         const prestamos = await Prestamo.findAll({
           where: {
             fecha_prestamo: {
-              [Op.between]: [
-                fechaInicioBolivia,
-                fechaFinBolivia
+              [Op.between]: [ 
+                fechaInicio,
+                fechaFin
               ]
             },
             id_estado: filtros.estado ? filtros.estado : { [Op.ne]: null }

@@ -102,7 +102,7 @@ export default function ReporteTabla({ datos, cargando }) {
                   {item.materia?.nombre || "N/A"}
                 </td>
                 <td className="px-4 py-3 text-gray-900">
-                  {item.modulo?.id_modulo || "N/A"}
+                  {item.modulo?.id_modulo ? item.modulo.id_modulo.toString() : "N/A"}
                 </td>
                 <td className="px-4 py-3 text-gray-900">
                   {item.semestre?.id_semestre || "N/A"}

@@ -1,3 +1,8 @@
+const dayjs = require('dayjs');
+const timezone = require('dayjs/plugin/timezone');
+const utc = require('dayjs/plugin/utc');
+dayjs.extend(utc);
+dayjs.extend(timezone);
 const { Prestamo, Detalle_Prestamo, Material, Estudiante, Docente, Materia, Usuario, Estado_Prestamo, sequelize } = require("../models");
 const { Op } = require("sequelize");
 
@@ -390,7 +395,8 @@ class PrestamoService {
         const prestamoActualizado = await prestamo.update({
             id_estado: estado,
             id_usuario_recibe: devolucionData.id_usuario_recibe,
-            fecha_devolucion: new Date()
+            fecha_devolucion: dayjs().tz('America/La_Paz').format('YYYY-MM-DD HH:mm:ss') + ''
+
         }, { transaction });
 
         await transaction.commit();
