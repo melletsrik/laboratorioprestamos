@@ -4,6 +4,11 @@ import React from "react";
 
 export default function ReporteExportar({ datos, filtros }) {
   if (datos.length === 0) return null;
+  const obtenerTextoObservacion = (observacion) => {
+  return typeof observacion === 'string' && observacion.trim().length > 0
+    ? observacion
+    : 'Sin observaciones';
+};
 
   const exportarExcel = () => {
     if (!datos || datos.length === 0) {

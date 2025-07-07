@@ -144,10 +144,12 @@ export default function ListadoPrestamos() {
     navegar('/registrar-prestamo?devolucion=1');
   };
 
-  const f_formatDate = (p_dateStr) => {
-    if (!p_dateStr) return "N/A";
-    const date = new Date(p_dateStr);
-    if (isNaN(date)) return "N/A";
+  // Formatear valores numéricos o fechas
+  const formatearValor = (valor) => {
+    if (valor === null || valor === undefined) return "N/A";
+    if (typeof valor === 'number') return valor.toString();
+    const date = new Date(valor);
+    if (isNaN(date)) return valor.toString();
     return date.toLocaleDateString("es-PE");
   };
 
@@ -339,7 +341,7 @@ export default function ListadoPrestamos() {
                         {nombreDocente}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {p.id_modulo || 'N/A'}
+                        {formatearValor(p.id_modulo)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                         {nombreEntrega}

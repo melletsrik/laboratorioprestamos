@@ -6,7 +6,7 @@ export default function ReporteBusqueda({
   onFiltrosChange,
   onBuscar,
   cargando,
-  setMensaje
+  setMensaje, setFiltros
 }) {
   const [localError, setLocalError] = useState(null);
   const fechaActual = new Date().toISOString().split('T')[0];
@@ -26,12 +26,6 @@ export default function ReporteBusqueda({
     }));
   }, []);
 
-  // Then add this effect to load data when filters change
-  useEffect(() => {
-    if (filtros.fechaInicio && filtros.fechaFin) {
-      cargarReporte();
-    }
-  }, [filtros.fechaInicio, filtros.fechaFin, filtros.estado]);
 
   const handleSearch = (e) => {
     e?.preventDefault();

@@ -124,17 +124,34 @@ class PrestamoService {
     const transaction = await sequelize.transaction();
     try {
       // Validación básica
+  
       if (
-        !prestamoData.id_estudiante ||
-        !prestamoData.id_usuario_entrega ||
-        !prestamoData.fecha_prestamo ||
-        !prestamoData.id_estado ||
-        !prestamoData.id_modulo ||
-        !prestamoData.id_semestre
+        prestamoData.id_estudiante === undefined ||
+        prestamoData.id_usuario_entrega === undefined ||
+        prestamoData.fecha_prestamo === undefined ||
+        prestamoData.id_estado === undefined ||
+        prestamoData.id_modulo === undefined ||
+        prestamoData.id_semestre === undefined
       ) {
         return {
           success: false,
           message: "Datos incompletos para crear préstamo",
+        };
+      }
+
+      // Validación de tipos y valores válidos
+      if (
+        typeof prestamoData.id_estudiante !== 'number' ||
+        typeof prestamoData.id_usuario_entrega !== 'number' ||
+        typeof prestamoData.id_estado !== 'number' ||
+        typeof prestamoData.id_modulo !== 'number' ||
+        typeof prestamoData.id_semestre !== 'number' ||
+        prestamoData.id_modulo < 0 ||
+        prestamoData.id_semestre <= 0
+      ) {
+        return {
+          success: false,
+          message: "Valores numéricos inválidos en los campos requeridos",
         };
       }
 

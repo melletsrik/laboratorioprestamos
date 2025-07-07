@@ -642,11 +642,11 @@ useEffect(() => {
         const idModulo = Number(idModuloSeleccionado);
         const idSemestre = Number(idSemestreSeleccionada);
 
-        if (isNaN(idModulo) || idModulo === 0) {
+        if (isNaN(idModulo)) {
           throw new Error("Debe seleccionar un módulo válido");
         }
 
-        if (isNaN(idSemestre) || idSemestre === 0) {
+        if (isNaN(idSemestre) || idSemestre <= 0) {
           throw new Error("Debe seleccionar un semestre válido");
         }
 
@@ -665,7 +665,7 @@ useEffect(() => {
         id_usuario_entrega: Number(usuario.id),
         fecha_prestamo: formatearFechaBD(), // Para préstamos nuevos
         id_estado: 1,
-        id_modulo: Number(idModuloSeleccionado) || null,
+        id_modulo: Number(idModuloSeleccionado), // No usar || 0 aquí
         id_semestre: Number(idSemestreSeleccionada) || null,
         id_materia: idMateriaSeleccionada ? Number(idMateriaSeleccionada) : null,
         id_docente: idDocenteSeleccionado ? Number(idDocenteSeleccionado) : null,
@@ -1085,7 +1085,7 @@ useEffect(() => {
                       }
                     }}
                     disabled={esDevolucion}
-                    className="focus:ring-red-500 focus:border-red-500 block w-full pl-10 text-sm border-gray-300 rounded-lg py-2.5 border focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200"
+                    className="focus:ring-red-500 block w-full pl-10 text-sm border-gray-300 rounded-lg py-2.5 border focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200"
                     placeholder="Escanear código..."
                   />
                 </div>
@@ -1102,7 +1102,7 @@ useEffect(() => {
                   value={nuevoDetalle.cantidad}
                   onChange={handleDetalleChange}
                   disabled={esDevolucion}
-                  className="focus:ring-red-500 focus:border-red-500 block w-full text-sm border-gray-300 rounded-lg py-2.5 px-3 border focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200"
+                  className="focus:ring-red-500 block w-full text-sm border-gray-300 rounded-lg py-2.5 px-3 border focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200"
                   required
                 />
               </div>

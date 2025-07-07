@@ -159,6 +159,7 @@ export default function VentanaReporte() {
               onBusquedaChange={manejarBusqueda}    
               cargando={cargando}  
               setMensaje={setMensaje}
+              setFiltros={setFiltros}
             />
           </div>
            {/* Botón de Excel alineado con el botón Buscar */}

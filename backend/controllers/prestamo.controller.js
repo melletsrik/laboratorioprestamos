@@ -28,17 +28,33 @@ exports.create = async (req, res) => {
   try {
     // Validación básica con los nuevos campos requeridos
     if (
-      !req.body.id_estudiante ||
-      !req.body.id_usuario_entrega ||
-      !req.body.fecha_prestamo ||
-      !req.body.id_estado ||
-      !req.body.id_modulo ||
-      !req.body.id_semestre ||
-      !req.body.detalles
+      req.body.id_estudiante === undefined ||
+      req.body.id_usuario_entrega === undefined ||
+      req.body.fecha_prestamo === undefined ||
+      req.body.id_estado === undefined ||
+      req.body.id_modulo === undefined ||
+      req.body.id_semestre === undefined ||
+      req.body.detalles === undefined
     ) {
       return res.status(400).json({
         success: false,
         message: "Datos incompletos para crear préstamo. Se requieren: id_estudiante, id_usuario_entrega, fecha_prestamo, id_estado, id_modulo, id_semestre y detalles",
+      });
+    }
+
+    // Validación de tipos y valores válidos
+    if (
+      typeof req.body.id_estudiante !== 'number' ||
+      typeof req.body.id_usuario_entrega !== 'number' ||
+      typeof req.body.id_estado !== 'number' ||
+      typeof req.body.id_modulo !== 'number' ||
+      typeof req.body.id_semestre !== 'number' ||
+      req.body.id_modulo < 0 ||
+      req.body.id_semestre <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valores numéricos inválidos en los campos requeridos",
       });
     }
 
