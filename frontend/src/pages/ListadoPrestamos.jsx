@@ -27,7 +27,7 @@ export default function ListadoPrestamos() {
     const f_fetchPrestamos = async () => {
       try {
         const token = localStorage.getItem("token");
-        console.log('Token:', token);
+       ;
         if (!token) {
           throw new Error('No hay token de autenticación');
         }
@@ -51,7 +51,6 @@ export default function ListadoPrestamos() {
           throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
         const data = await response.json();
-        console.log('Respuesta del backend:', data);
         
         if (!data) {
           throw new Error('No se recibieron datos del servidor');

@@ -39,6 +39,7 @@ const formatearFechaUI = (fecha = new Date()) => {
 
 const estadosPrestamo = [
   { id_estado: 1, nombre: "Activo" },
+  { id_estado: 2, nombre: "Parcial" },
   { id_estado: 3, nombre: "Devuelto" }
 ];
 
@@ -48,6 +49,7 @@ export default function RegistroPrestamo() {
   const [searchParams] = useSearchParams();
   const idPrestamoEditar = searchParams.get('editar');
   const [modoEdicion, setModoEdicion] = useState(!!idPrestamoEditar);
+  const [cargandoListas, setCargandoListas] = useState(true);
   const [cargandoDatos, setCargandoDatos] = useState(!!idPrestamoEditar);
   const [form, setForm] = useState({
     registro: "",
@@ -64,7 +66,7 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
   });
 }
   const [detalles, setDetalles] = useState([]);
-  const [searchTerm] = useState('');
+
   const [nuevoDetalle, setNuevoDetalle] = useState({
     id_material: "",
     codigo_material: "",
@@ -74,11 +76,6 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
     descripcion_devolucion: ""
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [ultimoTimeout, setUltimoTimeout] = useState(null);
-
-  const [materiaBuscada, setMateriaBuscada] = useState("");
-  const [semestreBuscado, setSemestreBuscado] = useState("");
-  const [prestamoADevolver, setPrestamoADevolver] = useState(null);
   const esDevolucion = searchParams.get("devolucion") === "1";
   // Cargar datos del préstamo si estamos en modo edición
   useEffect(() => {
@@ -137,6 +134,7 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
         }
         if (prestamo.modulo) {
           setIdModuloSeleccionado(String(prestamo.id_modulo || ''));
+          setIdSemestreSeleccionada(String(prestamo.id_semestre || ''));
         }
         
       } catch (error) {
@@ -147,10 +145,10 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
       }
     };
     
-    if (modoEdicion) {
+    if (modoEdicion  && !cargandoListas) {
       cargarPrestamo();
     }
-  }, [idPrestamoEditar, modoEdicion]);
+  }, [idPrestamoEditar, modoEdicion, cargandoListas]);
 
   useEffect(() => {
     if (!token) {
@@ -160,8 +158,6 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
 
   if (!token) return null;
 
-  const [fechaHoraActual, setFechaHoraActual] = useState("");
-
   const [estudianteNoEncontrado, setEstudianteNoEncontrado] = useState(false);
   const [idEstudiante, setIdEstudiante] = useState(null);
 
@@ -169,8 +165,7 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
   const [idMateriaSeleccionada, setIdMateriaSeleccionada] = useState("");
   const [idModuloSeleccionado, setIdModuloSeleccionado] = useState("");
   const [idSemestreSeleccionada, setIdSemestreSeleccionada] = useState("");
-
-
+const [materiaBuscada, setMateriaBuscada] = useState('');
 
   // Buscar estudiante por registro
   async function buscarEstudiantePorRegistro(registro) {
@@ -229,6 +224,7 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
         if (data.success && data.data) {
           setMaterias(data.data);
         }
+         setCargandoListas(prev => prev === true);
       });
   }, []);
 
@@ -244,11 +240,12 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
   }, []);
 
   // Si es devolución, autollenar datos
+ 
   useEffect(() => {
     const prestamoData = JSON.parse(localStorage.getItem("prestamoADevolver"));
     const usuario = JSON.parse(localStorage.getItem("user"));
     if (esDevolucion && prestamoData && usuario) {
-      setPrestamoADevolver(prestamoData);
+
       setForm(prev => ({
         ...prev,
         registro: prestamoData.registro || "",
@@ -277,8 +274,6 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
       setIsLoading(true);
       const prestamoData = JSON.parse(localStorage.getItem('prestamoADevolver'));
       const prestamoId = idPrestamoEditar || (prestamoData && prestamoData.id_prestamo);
-      
-      console.log('Datos del préstamo:', { prestamoId, prestamoData, idPrestamoEditar });
       
       if (!prestamoId) {
         throw new Error("No se pudo obtener el ID del préstamo a devolver");
@@ -325,11 +320,7 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
         fecha_devolucion: formatearFechaBD(new Date()),
         asistente_recepcion: String(form.asistente_recepcion || "")
       };
-
-      
-      
-      console.log("Datos de devolución:", datosDevolucion);
-      
+  
       // Enviar la solicitud de devolución al endpoint específico para devoluciones
       const response = await fetch(`http://localhost:4000/api/prestamos/${prestamoId}/devolver`, {
         method: "PUT",
@@ -365,16 +356,11 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
       
     } catch (error) {
       console.error("Error en el proceso de devolución:", error);
-      mostrarAlerta(
-        "error",
-        "Error",
-        error.message || "Ocurrió un error al procesar la devolución. Por favor, intente nuevamente."
-      );
+      mostrarAlerta( "error","Error", error.message || "Ocurrió un error al procesar la devolución. Por favor, intente nuevamente." );
     } finally {
       setIsLoading(false);
     }
   };
-
   // No ejecutar automáticamente handleDevolucion al montar el componente
   // Se ejecutará solo al enviar el formulario
 
@@ -403,6 +389,7 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
         if (data.success && data.data) {
           setDocentes(data.data);
         }
+        setCargandoListas(false); 
       });
   }, []);
 
@@ -439,9 +426,13 @@ useEffect(() => {
   let timeoutId;
 
   const handleKeyPress = (e) => {
-    // Solo procesar si el input de código está en foco
-    if (document.activeElement.name !== "codigo_material") return;
-
+     const isInputActive = document.activeElement.name === "codigo_material";
+    if (!isInputActive) return;
+    if (e.key === "Backspace") {
+      buffer = buffer.slice(0, -1);
+      clearTimeout(timeoutId); // evita la búsqueda al borrar
+      return;
+    }
     // Ignorar la tecla Enter
     if (e.key === 'Enter') return;
 
@@ -455,6 +446,7 @@ useEffect(() => {
       // Si hay algún texto en el buffer, intentar buscar el material
       if (buffer.trim()) {
         const codigoEscaneado = buffer.trim();
+        if (codigoEscaneado.length <3 ) return; //new
         const material = await buscarMaterialPorCodigo(codigoEscaneado);
         
         if (material) {
@@ -465,14 +457,15 @@ useEffect(() => {
             cantidad: 1, // Mantenemos la cantidad en 1 hasta que el usuario la cambie manualmente
             cantidad_disponible: material.cantidad_total || 0
           }));
-          // Limpiar el buffer pero no el input
-          buffer = "";
+          
         } else {
-          alert("Material no encontrado para el código escaneado.");
-          buffer = "";
+         // Mostrar mensaje de material no encontrado
+      mostrarAlerta("error", "Error", "Material no encontrado para el código escaneado.");
         }
+        // Limpiar el buffer pero no el input
+          buffer = "";
       }
-    }, 100); // Ajustado a 100ms para mejor detección
+    }, 200); // Ajustado a 100ms para mejor detección
   };
 
     // Agregar el listener de eventos
@@ -487,8 +480,7 @@ useEffect(() => {
   async function agregarDetalle() {
     if (!nuevoDetalle.codigo_material || nuevoDetalle.cantidad <= 0) {
 
-      mostrarAlerta("error", "Falta material", "Por favor, ingrese un código de material válido y una cantidad mayor a 0'");
-      
+      mostrarAlerta("error", "Falta material", "Por favor, ingrese un código de material válido y una cantidad mayor a 0'");  
       return;
     }
 
@@ -496,7 +488,7 @@ useEffect(() => {
       // Buscar el material completo usando el código
       const material = await buscarMaterialPorCodigo(nuevoDetalle.codigo_material);
       if (!material) {
-        alert('Material no encontrado en el sistema');
+        mostrarAlerta("error", "Falta material", "Material no encontrado en el sistema");
         return;
       }
 
@@ -626,6 +618,7 @@ useEffect(() => {
         const rol = localStorage.getItem("rol");
         const redirectPath = rol === "Administrativo" ? "/menu-admin" : "/menu-aux";
         navegar(redirectPath);
+        return;
       }
 
       const camposFaltantes = [];
@@ -649,15 +642,6 @@ useEffect(() => {
         if (isNaN(idSemestre) || idSemestre <= 0) {
           throw new Error("Debe seleccionar un semestre válido");
         }
-
-        // Add this debug log right before the fetch
-        console.log("Validando datos del préstamo:", {
-          idEstudiante,
-          idModuloSeleccionado,
-          idSemestreSeleccionada,
-          detallesLength: detalles.length,
-          usuarioId: usuario?.id
-        });
   
       // Código para crear un nuevo préstamo
       const datosPrestamo = {
@@ -678,8 +662,6 @@ useEffect(() => {
           descripcion_devolucion: String(detalle.descripcion_devolucion || "")
         }))
       };
-  
-      console.log("Datos del préstamo a enviar:", JSON.stringify(datosPrestamo, null, 2));
   
       const response = await fetch("http://localhost:4000/api/prestamos", {
         method: "POST",
@@ -1133,96 +1115,72 @@ useEffect(() => {
               </thead>
               <tbody className='bg-white divide-y divide-gray-200'>
                 {detalles.length === 0 ? (
-                  <tr>
-                    <td colSpan='5' className='px-6 py-4 text-center text-gray-500'>
-                      <div className='space-y-2'>
-                        <p>No hay materiales registrados</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : detalles.filter(d => {
-                  if (!searchTerm) return true;
-                  const searchLower = searchTerm.toLowerCase();
-                  return (
-                    (d.codigo_material?.toLowerCase().includes(searchLower)) ||
-                    (d.nombre?.toLowerCase().includes(searchLower)) ||
-                    (d.especificaciones?.toLowerCase().includes(searchLower))
-                  );
-                }).length === 0 ? (
-                  <tr>
-                    <td colSpan='5' className='px-6 py-4 text-center text-gray-500'>
-                      No se encontraron materiales que coincidan con la búsqueda
-                    </td>
-                  </tr>
-                ) : (
-                  detalles
-                    .filter(d => {
-                      if (!searchTerm) return true;
-                      const searchLower = searchTerm.toLowerCase();
-                      return (
-                        (d.codigo_material?.toLowerCase().includes(searchLower)) ||
-                        (d.nombre?.toLowerCase().includes(searchLower)) ||
-                        (d.especificaciones?.toLowerCase().includes(searchLower))
-                      );
-                    })
-                    .map((d, i) => (
-                      <tr key={i} className='hover:bg-gray-50'>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
-                          {d.codigo_material}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                          {d.nombre}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                          {d.especificaciones}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                          {d.cantidad}
-                        </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                          <div className='flex items-center space-x-2'>
-                            <input
-                              type='number'
-                              disabled={!esDevolucion}
-                              value={d.cantidad_devuelta ?? d.cantidad_prestada ?? d.cantidad}
-                              onChange={(e) => {
-                                const value = Math.min(
-                                  parseInt(e.target.value) || 0,
-                                  d.cantidad_prestada || d.cantidad
-                                );
-                                const updatedDetalles = [...detalles];
-                                updatedDetalles[i] = {
-                                  ...updatedDetalles[i],
-                                  cantidad_devuelta: value
-                                };
-                                setDetalles(updatedDetalles);
-                              }}
-                              min='0'
-                              max={d.cantidad_prestada || d.cantidad}
-                              className='w-16 text-center border border-gray-300 rounded px-1 py-1'
-                              required
-                            />
-                             {!esDevolucion && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const updatedDetalles = [...detalles];
-                                  updatedDetalles.splice(i, 1);
-                                  setDetalles(updatedDetalles);
-                                }}
-                                className="text-red-600 hover:text-red-800 p-1"
-                                title="Quitar material"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            )}  
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                )}
+  <tr>
+    <td colSpan='5' className='px-6 py-4 text-center text-gray-500'>
+      <div className='space-y-2'>
+        <p>No hay materiales registrados</p>
+      </div>
+    </td>
+  </tr>
+) : (
+  detalles.map((d, i) => (
+    <tr key={i} className='hover:bg-gray-50'>
+      <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
+        {d.codigo_material}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+        {d.nombre}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+        {d.especificaciones}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+        {d.cantidad}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+        <div className='flex items-center space-x-2'>
+          <input
+            type='number'
+            disabled={!esDevolucion}
+            value={d.cantidad_devuelta ?? d.cantidad_prestada ?? d.cantidad}
+            onChange={(e) => {
+              const value = Math.min(
+                parseInt(e.target.value) || 0,
+                d.cantidad_prestada || d.cantidad
+              );
+              const updatedDetalles = [...detalles];
+              updatedDetalles[i] = {
+                ...updatedDetalles[i],
+                cantidad_devuelta: value
+              };
+              setDetalles(updatedDetalles);
+            }}
+            min='0'
+            max={d.cantidad_prestada || d.cantidad}
+            className='w-16 text-center border border-gray-300 rounded px-1 py-1'
+            required
+          />
+          {!esDevolucion && (
+            <button
+              type="button"
+              onClick={() => {
+                const updatedDetalles = [...detalles];
+                updatedDetalles.splice(i, 1);
+                setDetalles(updatedDetalles);
+              }}
+              className="text-red-600 hover:text-red-800 p-1"
+              title="Quitar material"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
+  ))
+)}
               </tbody>
             </table>
           </div>
