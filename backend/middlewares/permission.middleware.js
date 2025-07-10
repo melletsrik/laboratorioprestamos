@@ -1,10 +1,14 @@
+
 const { PERMISSIONS } = require('../constants/permissions');
 
 module.exports = (requiredPermissions) => {
   return (req, res, next) => {
     try {
       if (!req.user) {
-        throw new Error('Usuario no autenticado');
+        return res.status(401).json({
+          success: false,
+          error: 'Usuario no autenticado'
+        });
       }
 
       // Verificar cada permiso requerido
@@ -13,14 +17,18 @@ module.exports = (requiredPermissions) => {
       );
 
       if (!hasAllPermissions) {
-        throw new Error('No tienes los permisos necesarios para esta acción');
+        return res.status(403).json({
+          success: false,
+          error: 'No tienes los permisos necesarios para esta acción'
+        });
       }
 
       next();
     } catch (error) {
-      return res.status(403).json({
+      console.error('Error en middleware de permisos:', error);
+      return res.status(500).json({
         success: false,
-        error: error.message
+        error: 'Error interno del servidor'
       });
     }
   };

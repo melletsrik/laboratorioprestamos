@@ -3,7 +3,7 @@ const { Usuario, Rol, sequelize } = require("../models");
 const { ROLES } = require("../constants/permissions");
 
 class UsuarioService {
-  static async createUsuario(usuarioData, userMakingRequest) {
+  static async createUsuario(usuarioData, req) {
     const transaction = await sequelize.transaction();
     try {
       // Validación básica de datos requeridos
@@ -23,7 +23,7 @@ class UsuarioService {
       }
 
       // Validar que solo admins puedan crear usuarios
-      if (userMakingRequest.rol !== ROLES.ADMINISTRATIVO) {
+      if (req.user.id_rol !== 1) {
         await transaction.rollback();
         return {
           success: false,
@@ -130,6 +130,66 @@ class UsuarioService {
       return {
         success: false,
         message: "Error al obtener usuarios",
+      };
+    }
+  }
+
+  static async updateRol(id, id_rol, userMakingRequest) {
+    const transaction = await sequelize.transaction();
+    try {
+      // Validar que solo admins puedan modificar roles
+      if (userMakingRequest.id_rol !== 1) {
+        await transaction.rollback();
+        return {
+          success: false,
+          message: "Solo administradores pueden modificar roles",
+        };
+      }
+
+      // Validar que el rol exista
+      const rol = await Rol.findByPk(id_rol, { transaction });
+      if (!rol) {
+        await transaction.rollback();
+        return {
+          success: false,
+          message: "Rol no válido",
+        };
+      }
+
+      // Buscar el usuario
+      const usuario = await Usuario.findByPk(id, { transaction });
+      if (!usuario) {
+        await transaction.rollback();
+        return {
+          success: false,
+          message: "Usuario no encontrado",
+        };
+      }
+
+      // No permitir cambiar el rol de administradores
+      if (usuario.id_rol === 1) {
+        await transaction.rollback();
+        return {
+          success: false,
+          message: "No se puede cambiar el rol de un administrador",
+        };
+      }
+
+      // Actualizar el rol
+      await usuario.update({ id_rol }, { transaction });
+      await transaction.commit();
+
+      return {
+        success: true,
+        message: "Rol actualizado correctamente"
+      };
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Error en updateRol:", error);
+      return {
+        success: false,
+        message: "Error al actualizar el rol",
+        error: error.message
       };
     }
   }

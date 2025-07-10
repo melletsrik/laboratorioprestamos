@@ -14,11 +14,11 @@ export default function ReporteTabla({ datos, cargando }) {
   const obtenerClaseEstado = (estadoId) => {
     switch (estadoId) {
       case 1:
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-100 text-blue-800 border-blue-200'; // Prestado
       case 2:
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200'; // Parcial
       case 3:
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800 border-green-200'; // Devuelto
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -35,6 +35,27 @@ export default function ReporteTabla({ datos, cargando }) {
         default:
           return 'N/A';
       }
+    };
+    // Función para obtener texto de observaciones
+    const obtenerTextoObservacion = (observaciones, detalle) => {
+      // Obtener todas las observaciones disponibles
+      const observacionesArray = [];
+      
+      // Agregar observaciones principales (préstamo y edición)
+      if (observaciones) {
+        observacionesArray.push(observaciones);
+      }
+      
+      // Agregar observaciones de devolución si existen
+      if (detalle.descripcion_devolucion) {
+        observacionesArray.push(detalle.descripcion_devolucion);
+      }
+      
+      // Si no hay ninguna observación, devolver mensaje por defecto
+      if (observacionesArray.length === 0) return 'Sin observaciones';
+      
+      // Unir todas las observaciones con saltos de línea
+      return observacionesArray.join('\n\n');
     };
   if (cargando) {
   return (
@@ -143,7 +164,7 @@ export default function ReporteTabla({ datos, cargando }) {
                     : "N/A"}
                 </td>
                 <td className="px-4 py-3 text-gray-900">
-                  {item.observaciones || 'N/A'}
+                  {obtenerTextoObservacion(item.observaciones, detalle)}
                 </td>
               </tr>
             ))

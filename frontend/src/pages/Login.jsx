@@ -24,16 +24,24 @@ export default function Login() {
     }
     
     try {
+      console.log('Iniciando login con:', {
+        nombreUsuario: nombreUsuario,
+        password: '*****' // No mostrar la contraseña real
+      });
+
       const respuesta = await axios.post(
         "http://localhost:4000/api/auth/login",
-        { nombreUsuario, password: contrasena },
+        { nombreUsuario, password_: contrasena },
         { 
           headers: { "Content-Type": "application/json" },
           timeout: 10000 // 10 seconds timeout
         }
       );
 
+      console.log('Respuesta del servidor:', respuesta.data);
+
       if (respuesta.data.token && respuesta.data.usuario) {
+        console.log('Login exitoso. Guardando datos...');
         // Guardar token y datos de usuario usando el Auth utility
         localStorage.setItem("token", respuesta.data.token);
         localStorage.setItem("user", JSON.stringify(respuesta.data.usuario));
@@ -54,6 +62,8 @@ export default function Login() {
       
       if (error.response) {
         // El servidor respondió con un estado de error
+        console.error('Respuesta de error:', error.response.data);
+        
         if (error.response.status === 401) {
           setError("Usuario o contraseña incorrectos");
         } else if (error.response.status >= 500) {

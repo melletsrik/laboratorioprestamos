@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"; 
 import axios from 'axios';
+import { Auth } from '../utils/auth';
 import UsuarioTabla from "../components/VentanaUsuario/UsuarioTabla"; //para mostrar la tabla de usuarios
 import UsuarioSearchBar from "../components/VentanaUsuario/UsuarioSearchBar"; //para buscar usuarios
 import ModalUsuario from "../components/VentanaUsuario/ModalUsuario"; //para mostrar el modal de agregar usuario
-import { Auth } from "../utils/auth";
 import { LuLogOut } from "react-icons/lu";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom"; 
@@ -11,11 +11,13 @@ import { LuUserCheck } from "react-icons/lu";
 export default function VentanaUsuario() {
   const [usuario, setUsuario] = useState([]); //estado para todos los 
   const [usuarioFiltrados, setUsuarioFiltrados] = useState([]); //estado para 
+  const [usuarioEditando, setUsuarioEditando] = useState(null); //estado para 
   const [isLoading, setIsLoading] = useState(false); // estado de carga
   const [modalAbierto, setModalAbierto] = useState(false);
   const [mensaje, setMensaje] = useState("");
 const navegar = useNavigate();
-const token = Auth.getToken("token"); 
+const token = Auth.getToken();
+const rol = Auth.getRol(); 
   useEffect(() => {
     if (!token) {
       navegar("/");
@@ -78,8 +80,8 @@ const token = Auth.getToken("token");
       // Log the incoming data for debugging
       console.log("Datos recibidos del formulario:", nuevoUsuario);
 
-        // Validate required fields - use 'password_' to match the form field name
-        const camposRequeridos = ['nombre', 'apellido', 'nombre_usuario', 'password_', 'rol'];
+        // Validate required fields - use 'password_' and 'id_rol' to match the form field names
+        const camposRequeridos = ['nombre', 'apellido', 'nombre_usuario', 'password_', 'id_rol'];
         const camposFaltantes = camposRequeridos.filter(campo => {
           const value = nuevoUsuario[campo];
           return value === undefined || value === null || value === '';
@@ -100,7 +102,7 @@ const token = Auth.getToken("token");
         apellido: String(nuevoUsuario.apellido || '').trim(),
         nombre_usuario: String(nuevoUsuario.nombre_usuario || '').trim(),
         password_: nuevoUsuario.password_?.trim() || '',
-        id_rol: Number(nuevoUsuario.rol),  // Map rol to id_rol and ensure it's a number
+        id_rol: Number(nuevoUsuario.id_rol),  // Use id_rol directly and ensure it's a number
         estado: Boolean(nuevoUsuario.estado)
       };
 
@@ -110,7 +112,10 @@ const token = Auth.getToken("token");
         const response = await axios({
           method: 'post',
           url: 'http://localhost:4000/api/usuarios',
-          data: datosUsuario,
+          data: {
+            ...datosUsuario,
+            rol_usuario: rol // Agregar el rol del usuario que hace la petición
+          },
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -156,6 +161,44 @@ const token = Auth.getToken("token");
         return false;
       }
     };
+  // Función para editar usuario
+  const editarUsuario = async (idUsuario, datosUsuario) => {
+    // Verificar permisos antes de hacer la petición
+    if (!Auth.canChangeRole()) {
+      setMensaje('No tienes permisos para cambiar roles');
+      return false;
+    }
+
+    try {
+      const token = Auth.getToken();
+      if (!token) {
+        setMensaje('No hay sesión activa');
+        return false;
+      }
+
+      const response = await axios.put(`http://localhost:4000/api/usuarios/${idUsuario}/rol`, {
+        id_rol: datosUsuario.id_rol
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        await cargarUsuarios();
+        setMensaje('Rol actualizado correctamente');
+        return true;
+      } else {
+        setMensaje(response.data.message || 'Error al actualizar el rol');
+        return false;
+      }
+    } catch (error) {
+      console.error("Error al editar usuario:", error);
+      setMensaje(`Error al editar usuario: ${error.response?.data?.message || error.message}`);
+      return false;
+    }
+  };
   // Función para cambiar el estado del usuario
   const cambiarEstado = async (idUsuario, nuevoEstado) => {
     try {
@@ -285,11 +328,27 @@ return (
         </div>
       )}
 
-      {/* Tabla de materiales */}
-      <UsuarioTabla  usuarios={usuarioFiltrados} onCambiarEstado={cambiarEstado}/>
+      {/* Tabla de usuarios */}
+      <UsuarioTabla  
+        usuarios={usuarioFiltrados} 
+        onCambiarEstado={cambiarEstado}
+        onEditarUsuario={(usuario) => {
+          setUsuarioEditando(usuario);
+          setModalAbierto(true);
+        }}
+      />
 
       {/* Modal */}
-      <ModalUsuario isOpen={modalAbierto} onClose={() => setModalAbierto(false)} onAgregarUsuario={AgregarUsuario} />
+      <ModalUsuario 
+        isOpen={modalAbierto} 
+        onClose={() => {
+          setModalAbierto(false);
+          setUsuarioEditando(null);
+        }} 
+        onAgregarUsuario={AgregarUsuario} 
+        onEditarUsuario={editarUsuario}
+        usuarioEditando={usuarioEditando}
+      />
     </div>
     </div>
   );

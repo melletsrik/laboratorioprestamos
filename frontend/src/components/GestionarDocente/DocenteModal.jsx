@@ -88,7 +88,7 @@ export default function Modal({isOpen, onClose, onAgregarDocente, docenteEditar,
             <select className="w-full px-4 py-2 border rounded-md" value={estado} onChange={e => { setEstado(e.target.value); setErrorEstado(""); }}>
               <option value="">Seleccione estado</option>
               <option value={1}>Activo</option>
-              <option value={0}>Inactivo</option>
+              <option value={0} disabled={!docenteEditar} >Inactivo </option>
             </select>
             {errorEstado && (
               <div className="text-red-600 text-xs mt-1">{errorEstado}</div>

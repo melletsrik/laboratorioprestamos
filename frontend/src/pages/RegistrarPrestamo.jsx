@@ -11,7 +11,7 @@ const formatearFechaBD = (fecha = new Date()) => {
   // Asegurarse de que la fecha esté en la zona horaria local
   const fechaLocal = new Date(fecha);
   const offset = fechaLocal.getTimezoneOffset() * 60000; // Diferencia en milisegundos
-  const fechaBolivia = new Date(fechaLocal.getTime() - offset);
+ const fechaBolivia = fechaLocal; // Ya está en hora local
   
   const pad = (num) => num.toString().padStart(2, '0');
   const year = fechaBolivia.getFullYear();
@@ -59,6 +59,8 @@ export default function RegistroPrestamo() {
     asistente_recepcion: "",
     observaciones: "",
     id_estado: "1",
+    fecha_prestamo: "",
+    fecha_devolucion: ""
   });
 function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
   Swal.fire({
@@ -103,6 +105,8 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
           asistente_recepcion: prestamo.asistente_recepcion || '',
           observaciones: prestamo.observaciones || '',
           id_estado: String(prestamo.id_estado) || '1',
+          fecha_prestamo: prestamo.fecha_prestamo || '',
+          fecha_devolucion: prestamo.fecha_devolucion || ''
         }));
         
         // Update loan details
@@ -125,16 +129,17 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
           setMateriaBuscada(prestamo.materia.nombre);
           setIdMateriaSeleccionada(String(prestamo.id_materia || ''));
         }
+        setIdSemestreSeleccionada(String(prestamo. id_semestre || ''));
         if (prestamo.semestre) {
           setSemestreBuscado(prestamo.semestre.nombre);
-          setIdSemestreSeleccionada(String(prestamo.id_semestre || ''));
+          
         }
         if (prestamo.docente) {
           setIdDocenteSeleccionado(String(prestamo.id_docente || ''));
         }
+        setIdModuloSeleccionado(String(prestamo.id_modulo !== undefined ? prestamo.id_modulo : ''));
         if (prestamo.modulo) {
-          setIdModuloSeleccionado(String(prestamo.id_modulo || ''));
-          setIdSemestreSeleccionada(String(prestamo.id_semestre || ''));
+          setModuloBuscado(prestamo.modulo.nombre);
         }
         
       } catch (error) {
@@ -148,7 +153,7 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
     if (modoEdicion  && !cargandoListas) {
       cargarPrestamo();
     }
-  }, [idPrestamoEditar, modoEdicion, cargandoListas]);
+  }, [ modoEdicion, cargandoListas]);
 
   useEffect(() => {
     if (!token) {
@@ -165,7 +170,8 @@ function mostrarAlerta(tipo="info", titulo ="", mensaje=""){
   const [idMateriaSeleccionada, setIdMateriaSeleccionada] = useState("");
   const [idModuloSeleccionado, setIdModuloSeleccionado] = useState("");
   const [idSemestreSeleccionada, setIdSemestreSeleccionada] = useState("");
-const [materiaBuscada, setMateriaBuscada] = useState('');
+  const [materiaBuscada, setMateriaBuscada] = useState('');
+  const [moduloBuscado, setModuloBuscado] = useState('');
 
   // Buscar estudiante por registro
   async function buscarEstudiantePorRegistro(registro) {
@@ -215,18 +221,21 @@ const [materiaBuscada, setMateriaBuscada] = useState('');
   // Buscar por materia, módulo y semestre
   const [materias, setMaterias] = useState([]);
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("http://localhost:4000/api/materias", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.data) {
-          setMaterias(data.data);
-        }
-         setCargandoListas(prev => prev === true);
-      });
-  }, []);
+  const token = localStorage.getItem("token");
+  fetch("http://localhost:4000/api/materias", {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.data) {
+        setMaterias(data.data);
+      }
+    }) 
+    .finally(() => {
+      setCargandoListas(false);
+    });
+}, []);
+
 
   // Autocompletar auxiliar entrega desde localStorage
   useEffect(() => {
@@ -253,7 +262,8 @@ const [materiaBuscada, setMateriaBuscada] = useState('');
         apellidos: prestamoData.apellidos || "",
         asistente_entrega: prestamoData.asistente_entrega || "",
         asistente_recepcion: usuario.nombre + " " + usuario.apellido,
-        fecha_devolucion: prestamoData.fecha_devolucion || formatearFechaBD(),
+        fecha_prestamo: prestamoData.fecha_prestamo || prev.fecha_prestamo, // Mantener la fecha del préstamo
+        fecha_devolucion: formatearFechaBD(new Date()), // Siempre usar la fecha actual para la devolución
         observaciones: prestamoData.observaciones || "",
         
         // NO establecemos id_estado, lo dejamos como estaba o que el usuario lo elija
@@ -287,14 +297,20 @@ const [materiaBuscada, setMateriaBuscada] = useState('');
       }
 
       // Validar cantidades devueltas
+      // Validar que las cantidades devueltas sean mayores a 0
       const detallesConErrores = detalles.filter(detalle => {
         const cantidadDevuelta = Number(detalle.cantidad_devuelta) || 0;
-        const cantidadPrestada = Number(detalle.cantidad_prestada || detalle.cantidad) || 0;
-        return cantidadDevuelta <= 0 || cantidadDevuelta > cantidadPrestada;
+        return cantidadDevuelta <= 0;
       });
 
       if (detallesConErrores.length > 0) {
-        throw new Error("Las cantidades devueltas no son válidas. Asegúrese de que las cantidades sean mayores a 0 y no excedan las cantidades prestadas.");
+        throw new Error("Las cantidades devueltas deben ser mayores a 0");
+      }
+
+      // Validar que se haya seleccionado un estado válido
+      const estadoSeleccionado = Number(form.id_estado);
+      if (!estadoSeleccionado || !estadosPrestamo.find(e => e.id_estado === estadoSeleccionado)) {
+        throw new Error("Debe seleccionar un estado válido para el préstamo");
       }
 
       // Obtener el usuario actual
@@ -312,12 +328,35 @@ const [materiaBuscada, setMateriaBuscada] = useState('');
         descripcion_devolucion: String(detalle.descripcion_devolucion || "")
       }));
 
+      // Determinar si es un material consumible basado en los detalles
+      const esConsumible = detalles.some(detalle => detalle.es_consumible === '1');
+      
+      // Si es consumible, usar el estado seleccionado por el usuario
+      // Si no es consumible, validar que la cantidad coincida con el estado
+      if (!esConsumible) {
+        const cantidadPrestadaTotal = detalles.reduce((total, detalle) => 
+          total + (Number(detalle.cantidad_prestada || detalle.cantidad) || 0), 0
+        );
+        const cantidadDevueltaTotal = detalles.reduce((total, detalle) => 
+          total + (Number(detalle.cantidad_devuelta || detalle.cantidad) || 0), 0
+        );
+
+        // Solo validar coincidencia de cantidades si no es consumible
+        if (estadoSeleccionado === 3 && cantidadDevueltaTotal !== cantidadPrestadaTotal) {
+          throw new Error("Para marcar como 'Devuelto', la cantidad devuelta debe coincidir con la cantidad prestada");
+        }
+      }
+
       // Preparar los datos de la devolución
       const datosDevolucion = {
         id_usuario_recibe: usuario.id, // ID del usuario que recibe
         detalles: detallesDevolucion,
-        observaciones: String(form.observaciones || ""),
-        fecha_devolucion: formatearFechaBD(new Date()),
+        observaciones: prestamoData.observaciones 
+        ? `${prestamoData.observaciones}\n\n${form.observaciones || ''}`
+        : form.observaciones || '',
+        fecha_devolucion: formatearFechaBD(new Date()), // Siempre usar la fecha actual para la devolución
+        fecha_prestamo: form.fecha_prestamo, // Mantener la fecha del préstamo original
+        id_estado: parseInt(form.id_estado),
         asistente_recepcion: String(form.asistente_recepcion || "")
       };
   
@@ -366,16 +405,13 @@ const [materiaBuscada, setMateriaBuscada] = useState('');
 
   function handleChange(e) {
     const { name, value } = e.target;
-    if (name === "descripcion") {
+   
       setForm((prev) => ({
         ...prev,
-        [esDevolucion ? "descripcion_devolucion" : "descripcion_prestamo"]: value
+        [name]: value
       }));
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-    }
+   
   }
-
   const [docentes, setDocentes] = useState([]);
   const [idDocenteSeleccionado, setIdDocenteSeleccionado] = useState("");
 
@@ -609,7 +645,7 @@ useEffect(() => {
         }
         
         // Show success message
-        mostrarAlerta("success", "¡Éxito!", "Devolución registrada correctamente");
+        mostrarAlerta("success", "¡Éxito!", "Edicion registrada correctamente");
         
         // Clear the loan from localStorage
         localStorage.removeItem('prestamoADevolver');
@@ -853,7 +889,7 @@ useEffect(() => {
               name="asistente_recepcion"
               value={form.asistente_recepcion}
               onChange={e => setForm(prev => ({ ...prev, asistente_recepcion: e.target.value }))}
-              readOnly={!esDevolucion}
+              readOnly
               required={esDevolucion}
               className={`w-full border ${esDevolucion ? 'border-gray-300' : 'border-gray-200 bg-gray-50'} rounded-lg px-4 py-2.5 ${esDevolucion ? 'focus:ring-2 focus:ring-red-500 focus:border-transparent' : 'cursor-not-allowed'}`}
             />
@@ -875,7 +911,7 @@ useEffect(() => {
               required
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
             >
-              <option value="">Seleccione una materia</option>
+              <option value="">Seleccione materia</option>
               {materias.map(m => (
                 <option key={m.id_materia} value={m.id_materia}>
                   {m.nombre}
@@ -888,16 +924,16 @@ useEffect(() => {
               Módulo
             </label>
             <select
-              type="number"
               disabled={esDevolucion}
               id="modulo"
               name="modulo"
+              type="number"
               value={idModuloSeleccionado}
               onChange={e => setIdModuloSeleccionado(e.target.value)}
               required
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
             >
-              <option value="">Seleccione módulo</option>
+              <option value="">Seleccione modulo </option>
               {[0, 1, 2, 3, 4, 5].map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
@@ -916,7 +952,7 @@ useEffect(() => {
               required
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
             >
-              <option value="">Seleccione módulo</option>
+              <option value="">Seleccione semestre</option>
               {[1, 2].map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
@@ -935,7 +971,7 @@ useEffect(() => {
                 <input
                   type="text"
                   id="fecha_entrega"
-                  value={formatearFechaUI()}
+                  value={form.fecha_prestamo ?  formatearFechaUI(form.fecha_prestamo): ""}
                   readOnly
                   className="w-full border border-gray-200 bg-gray-50 rounded px-3 py-2 cursor-not-allowed"
                 />
@@ -1026,9 +1062,9 @@ useEffect(() => {
           </label>
           <textarea
             id="descripcion"
-            name="descripcion"
+            name="observaciones"
             rows="3"
-            value={esDevolucion ? form.descripcion_devolucion : form.descripcion_prestamo}
+            value={ form.observaciones}
             onChange={handleChange}
             
             className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-var(--color-primary)"
@@ -1192,7 +1228,7 @@ useEffect(() => {
                 type="submit"
                 className="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-lg"
               >
-                {esDevolucion ? 'Registrar Devolución' : 'Registrar Préstamo'}
+                {esDevolucion ? 'Registrar Devolución' : 'Registrar Préstamo' }
               </button>
             </div>
           </form>

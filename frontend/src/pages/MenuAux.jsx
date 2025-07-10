@@ -1,5 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { LuClipboardList } from "react-icons/lu";
 import { LuBookOpen } from "react-icons/lu";
 import { FiPackage } from "react-icons/fi";
@@ -10,6 +11,16 @@ import { Auth } from '../utils/auth';
 
 export default function MenuAux() {
   const navegar = useNavigate();
+  const token = Auth.getToken();
+
+  // Inicializar Auth al cargar el componente
+  useEffect(() => {
+    Auth.init();
+    const currentToken = Auth.getToken();
+    if (!currentToken) {
+      navegar('/login');
+    }
+  }, [navegar]);
 
   const menuItems = [
     {
@@ -38,11 +49,16 @@ export default function MenuAux() {
     },
     {
       icon: RiFileExcel2Line,
-      title: "Reporte de Préstamos",   description:"Ver reportes de préstamos",
-       route:"/ReportePrestamo"
-      
+      title: "Reporte de Préstamos", 
+      description:"Ver reportes de préstamos",
+      route:"/ReportePrestamo"
     }
   ];
+
+  if (!token) {
+    navegar('/login');
+    return null;
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen px-7 py-6">
@@ -54,7 +70,10 @@ export default function MenuAux() {
           {menuItems.map((item, index) => (
             <button
               key={index}
-              onClick={() => navegar(item.route)}
+              onClick={() => {
+                Auth.init();
+                navegar(item.route);
+              }}
               className="flex flex-col items-center text-center p-6 rounded-xl bg-white hover:bg-gray-50 text-gray-700 shadow-md border border-gray-300 transition hover:scale-105"
             >
               <div className="bg-red-100 p-3 rounded-full mb-4">

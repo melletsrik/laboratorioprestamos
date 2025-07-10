@@ -1,7 +1,7 @@
 module.exports = {
   ROLES: {
-    ADMINISTRATIVO: 'Administrativo',
-    AUXILIAR: 'Auxiliar'
+    ADMINISTRATIVO: 1,
+    AUXILIAR: 2
   },
   
   PERMISSIONS: {
@@ -22,10 +22,6 @@ module.exports = {
     DOCENTE_LISTAR: 'docente:listar',
     DOCENTE_MODIFICAR: 'docente:modificar',
     
-    // Préstamos
-    PRESTAMO_REGISTRAR: 'prestamo:registrar',
-    PRESTAMO_DEVOLUCION: 'prestamo:devolucion',
-    
     // Usuario
     USUARIO_REGISTRAR: 'usuario:registrar',
     USUARIO_LISTAR: 'usuario:listar',
@@ -36,32 +32,31 @@ module.exports = {
     MATERIA_MODIFICAR: 'materia:modificar',
     MATERIA_LISTAR: 'materia:listar',
     MATERIA_BUSCAR: 'materia:buscar',
-
+  
     //pretsamo
     PRESTAMO_REGISTRAR: 'prestamo:registrar',
     PRESTAMO_MODIFICAR: 'prestamo:modificar', //maneja la devolucion
     PRESTAMO_LISTAR: 'prestamo:listar',
     PRESTAMO_BUSCAR: 'prestamo:buscar',
-  
   },
   
   ROLE_PERMISSIONS: {
-    Administrativo: [
+    ADMINISTRATIVO: [
       'material:registrar', 'material:modificar', 'material:listar', 'material:buscar',
       'estudiante:registrar', 'estudiante:modificar', 'estudiante:listar', 'estudiante:buscar',
       'docente:registrar', 'docente:listar', 'docente:modificar',
       'prestamo:registrar', 'prestamo:devolucion',
       'usuario:registrar', 'usuario:listar', 'usuario:modificar',
-      'materia:registrar', 'materia:modificar','materia:listar','materia:buscar',
-      'prestamo:registrar','prestamo:modificar', 'prestamo:listar','prestamo:buscar',
+      'materia:registrar', 'materia:modificar', 'materia:listar', 'materia:buscar',
+      'prestamo:registrar', 'prestamo:modificar', 'prestamo:listar', 'prestamo:buscar'
     ],
-    Auxiliar: [
-      'material:listar', 'material:buscar',
+    AUXILIAR: [
+      'material:listar', 'material:buscar','material:registrar', 'material:modificar',
       'estudiante:registrar', 'estudiante:modificar', 'estudiante:listar', 'estudiante:buscar',
-      'docente:registrar', 'docente:listar',
+      'docente:listar', 
       'prestamo:registrar', 'prestamo:devolucion',
-      'materia:registrar', 'materia:modificar','materia:listar','materia:buscar',
-      'prestamo:registrar','prestamo:modificar', 'prestamo:listar','prestamo:buscar',
+      'materia:registrar', 'materia:modificar', 'materia:listar', 'materia:buscar',
+      'prestamo:registrar', 'prestamo:modificar', 'prestamo:listar', 'prestamo:buscar'
     ]
   }
 };

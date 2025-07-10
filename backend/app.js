@@ -29,10 +29,10 @@ const reporteRoutes = require('./routes/reporte.routes');
 app.use('/api/auth', authRoutes);
 
 // Middleware de autenticación para rutas API
-app.use('/api', authMiddleware); // Aplica primero el middleware
+app.use('/api', authMiddleware);
 
 // Monta todas las rutas protegidas
-app.use('/api', protectedRoutes); // Luego las rutas protegidas
+app.use('/api', protectedRoutes);
 app.use('/api/reporte', reporteRoutes);
 
 // Manejo de errores

@@ -1,7 +1,41 @@
+const ROLES = {
+  ADMINISTRATIVO: 'Administrativo',
+  AUXILIAR: 'Auxiliar'
+};
+
+// Permisos por rol
+const ROLE_PERMISSIONS = {
+  [ROLES.ADMINISTRATIVO]: [
+    'estudiante:listar',
+    'estudiante:registrar',
+    'estudiante:modificar',
+    'docente:listar',
+    'docente:registrar',
+    'docente:modificar',
+    'material:listar',
+    'material:registrar',
+    'material:modificar',
+    'prestamo:listar',
+    'prestamo:registrar',
+    'prestamo:modificar'
+  ],
+  [ROLES.AUXILIAR]: [
+    'estudiante:listar',
+    'estudiante:registrar',
+    'estudiante:modificar',
+    'docente:listar',
+    'material:listar',
+    'prestamo:listar',
+    'prestamo:registrar',
+    'prestamo:modificar'
+  ]
+};
+
 export const Auth = {
-  // Cache para el token
+  // Cache para el token y permisos
   tokenCache: null,
   rolCache: null,
+  permissionsCache: null,
   
   // Rutas públicas que no requieren autenticación
   publicPaths: ['/login', '/unauthorized'],
@@ -10,6 +44,11 @@ export const Auth = {
   init() {
     this.tokenCache = localStorage.getItem('token');
     this.rolCache = localStorage.getItem('rol');
+    
+    // Obtener permisos del usuario
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    this.permissionsCache = user.permissions || [];
+    
     this.setupEventListeners();
     
     // Prevent initial back button issue
@@ -88,6 +127,34 @@ export const Auth = {
 
   isRol(rol) {
     return this.getRol() === rol;
+  },
+
+  // Verificar si el usuario tiene un permiso específico
+  hasPermission(permission) {
+    return this.permissionsCache.includes(permission);
+  },
+
+  // Verificar si el usuario tiene permisos de administrador
+  isAdmin() {
+    return this.getRol() === ROLES.ADMINISTRATIVO;
+  },
+
+  // Verificar si puede cambiar el rol de un usuario
+  canChangeRole() {
+    return this.isAdmin();
+  },
+
+  getUser() {
+    const usuarioString = localStorage.getItem('usuario');
+    if (usuarioString) {
+      try {
+        return JSON.parse(usuarioString);
+      } catch (error) {
+        console.error('Error al parsear el usuario:', error);
+        return null;
+      }
+    }
+    return null;
   },
   
   // Initialize the auth system

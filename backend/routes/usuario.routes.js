@@ -20,4 +20,9 @@ router.put('/:id/estado',
   usuarioController.updateEstado
 );
 
+router.put('/:id/rol',
+  permissionMiddleware([PERMISSIONS.USUARIO_MODIFICAR]),
+  usuarioController.updateRol
+);
+
 module.exports = router;

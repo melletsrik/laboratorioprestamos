@@ -2,6 +2,12 @@ const jwt = require('jsonwebtoken');
 const { Usuario, Rol } = require('../models');
 const { ROLES, PERMISSIONS, ROLE_PERMISSIONS } = require('../constants/permissions');
 
+// Función auxiliar para obtener el rol desde el id
+const getRoleDescription = (roleId) => {
+  const role = Object.entries(ROLES).find(([key, value]) => value === roleId);
+  return role ? role[0] : null;
+};
+
 module.exports = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -30,6 +36,15 @@ module.exports = async (req, res, next) => {
       });
     }
 
+    // Verificar que el rol sea válido usando getRoleDescription
+    const roleDescription = getRoleDescription(usuario.id_rol);
+    if (!roleDescription) {
+      return res.status(403).json({
+        success: false,
+        error: 'Rol de usuario no válido'
+      });
+    }
+
     // Verificar que el usuario esté activo
     if (!usuario.estado) {
       return res.status(403).json({
@@ -38,22 +53,18 @@ module.exports = async (req, res, next) => {
       });
     }
 
-    // Verificar que el rol sea válido
-    if (!Object.values(ROLES).includes(usuario.rol.descripcion)) {
-      return res.status(403).json({
-        success: false,
-        error: 'Rol de usuario no válido'
-      });
-    }
-
     // Adjuntar usuario y permisos al request
     req.user = {
       id: usuario.id_usuario,
+      id_rol: usuario.id_rol,
       nombre: usuario.nombre,
       apellido: usuario.apellido,
-      rol: usuario.rol.descripcion,
-      permissions: ROLE_PERMISSIONS[usuario.rol.descripcion] || []
+      rol: roleDescription,
+      permissions: ROLE_PERMISSIONS[roleDescription] || []
     };
+
+    console.log('Usuario autenticado:', req.user); // Debug
+    console.log('Permisos:', req.user.permissions); // Debug
 
     next();
   } catch (error) {

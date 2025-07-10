@@ -26,29 +26,25 @@ const {
           Detalle_Prestamo: Detalle_Prestamo !== undefined,
           Material: Material !== undefined
         });
+const where ={ };
+  if (filtros.fechaInicio && filtros.fechaFin) {
+        const [añoI, mesI, diaI] = filtros.fechaInicio.split('-').map(Number);
+        const [añoF, mesF, diaF] = filtros.fechaFin.split('-').map(Number);
 
-        // Manejar fechas directamente con timezone de Bolivia
-        const fechaInicio = new Date(filtros.fechaInicio);
-        const fechaFin = new Date(filtros.fechaFin);
-        
-        // Ajustar las fechas para incluir todo el día
-        fechaInicio.setHours(0, 0, 0, 0);
-        fechaFin.setHours(23, 59, 59, 999);
-        
-        // Convertir a timezone de Bolivia
-        fechaInicio.setUTCHours(fechaInicio.getHours() - 4);
-        fechaFin.setUTCHours(fechaFin.getHours() - 4);
+        const fechaInicio = new Date(añoI, mesI - 1, diaI, 0, 0, 0);
+        const fechaFin = new Date(añoF, mesF - 1, diaF, 23, 59, 59);
 
+        where.fecha_prestamo = {
+          [Op.between]: [fechaInicio, fechaFin]
+        };
+      }
+
+      // Aplicar filtro de estado si viene especificado y no está vacío
+      if (filtros.estado !== null && filtros.estado !== undefined && filtros.estado !== "") {
+        where.id_estado = filtros.estado;
+      }
         const prestamos = await Prestamo.findAll({
-          where: {
-            fecha_prestamo: {
-              [Op.between]: [ 
-                fechaInicio,
-                fechaFin
-              ]
-            },
-            id_estado: filtros.estado ? filtros.estado : { [Op.ne]: null }
-          },
+          where:where,
           include: [
             {
               model: Estudiante,
@@ -69,10 +65,11 @@ const {
               model: Usuario, 
               as: "usuarioEntrega" 
             },
-            { 
-              model: Usuario, 
-              as: "usuarioRecibe" 
-            },
+{ 
+    model: Usuario, 
+    as: "usuarioRecibe", 
+    required: false 
+  },
             { 
               model: Estado_Prestamo, 
               as: "estado" 
@@ -117,6 +114,11 @@ const {
                 nombres: prestamo.usuarioEntrega.nombre,
                 apellidos: prestamo.usuarioEntrega.apellido
               },
+               usuario_recibe: prestamo.usuarioRecibe ? { // Usa prestamo.usuarioRecibe
+    id_usuario: prestamo.usuarioRecibe.id_usuario,
+    nombres: prestamo.usuarioRecibe.nombre,
+    apellidos: prestamo.usuarioRecibe.apellido
+  } : null,
               fecha_prestamo: prestamo.fecha_prestamo,
               modulo: {
                 id_modulo: prestamo.id_modulo,
@@ -139,12 +141,8 @@ const {
                 },
                 cantidad: detalle.cantidad,
                 cantidad_devuelta: detalle.cantidad_devuelta,
-                usuario_recibe: {
-                  id_usuario: prestamo.usuarioRecibe?.id_usuario,
-                  nombres: prestamo.usuarioRecibe?.nombre,
-                  apellidos: prestamo.usuarioRecibe?.apellido
-                },
-                fecha_devolucion: prestamo.fecha_devolucion
+               
+                fecha_devolucion: prestamo.fecha_devolucion ,
               }))
             };
           } catch (error) {
@@ -152,7 +150,7 @@ const {
             throw error;
           }
         });
-  
+
         return {
           success: true,
           data: datosFormateados,

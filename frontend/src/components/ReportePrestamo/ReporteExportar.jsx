@@ -4,10 +4,26 @@ import React from "react";
 
 export default function ReporteExportar({ datos, filtros }) {
   if (datos.length === 0) return null;
-  const obtenerTextoObservacion = (observacion) => {
-  return typeof observacion === 'string' && observacion.trim().length > 0
-    ? observacion
-    : 'Sin observaciones';
+  // Función para obtener texto de observaciones
+const obtenerTextoObservacion = (observaciones, detalle) => {
+  // Obtener todas las observaciones disponibles
+  const observacionesArray = [];
+  
+  // Agregar observaciones principales (préstamo y edición)
+  if (observaciones) {
+    observacionesArray.push(observaciones);
+  }
+  
+  // Agregar observaciones de devolución si existen
+  if (detalle.descripcion_devolucion) {
+    observacionesArray.push(detalle.descripcion_devolucion);
+  }
+  
+  // Si no hay ninguna observación, devolver mensaje por defecto
+  if (observacionesArray.length === 0) return 'Sin observaciones';
+  
+  // Unir todas las observaciones con saltos de línea
+  return observacionesArray.join('\n\n');
 };
 
   const exportarExcel = () => {
@@ -28,9 +44,7 @@ export default function ReporteExportar({ datos, filtros }) {
   'Devuelto',
   'Estado',
   'Fecha Préstamo',
-  'Descripción Préstamo',
   'Fecha Devolución',
-  'Descripción Devolución',
   'Entregado Por',
   'Recibido Por',
   'Observaciones'
@@ -51,18 +65,17 @@ datos.forEach(item => {
         Código_Material: detalle.material?.codigo_material || 'N/A',
         Cantidad: detalle.cantidad,
         Devuelto: detalle.cantidad_devuelta,
-        Estado: obtenerTextoEstado(item.estado?.id_estado),
+        Estado: obtenerClaseEstado(item.estado?.id_estado),
         Fecha_Préstamo: new Date(item.fecha_prestamo).toLocaleString(),
-        Descripción_Prestamo: item.descripcion_prestamo || 'N/A',
         Fecha_Devolución: detalle.fecha_devolucion
           ? new Date(detalle.fecha_devolucion).toLocaleString()
           : 'N/A',
-        Descripción_Devolución: detalle.descripcion_devolucion || 'N/A',
+       
         Entregado_Por: `${item.usuario_entrega?.nombres || ''} ${item.usuario_entrega?.apellidos || ''}`,
         Recibido_Por: detalle.usuario_recibe
           ? `${detalle.usuario_recibe.nombres} ${detalle.usuario_recibe.apellidos}`
           : 'N/A',
-        Observaciones: obtenerTextoObservacion(item.observacion)
+        Observaciones: obtenerTextoObservacion(item.observaciones, detalle)
       });
     });
   });
@@ -84,9 +97,7 @@ datos.forEach(item => {
         fila.Devuelto,
         fila.Estado,
         fila.Fecha_Préstamo,
-        fila.Descripción_Prestamo,
         fila.Fecha_Devolución,
-        fila.Descripción_Devolución,
         fila.Entregado_Por,
         fila.Recibido_Por,
         fila.Observaciones
@@ -119,15 +130,19 @@ datos.forEach(item => {
     });
   };
 
-  // Obtener texto de estado
-const obtenerTextoEstado = (estadoId) => {
-  switch (estadoId) {
-    case 1: return 'Prestado';
-    case 2: return 'Parcial';
-    case 3: return 'Devuelto';
-    default: return 'N/A';
-  }
-};
+  // Obtener clase de estado (para el formato de Excel)
+  const obtenerClaseEstado = (estadoId) => {
+    switch (estadoId) {
+      case 1:
+        return 'Prestado';
+      case 2:
+        return 'Parcial';
+      case 3:
+        return 'Devuelto';
+      default:
+        return 'N/A';
+    }
+  };
 
   return (
       <button

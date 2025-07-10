@@ -8,7 +8,6 @@ import Button from "../components/Button";
 import axios from 'axios';
 import { LuLogOut } from "react-icons/lu";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
-import {  FiPlus } from "react-icons/fi";
 import { LuUsers } from "react-icons/lu";
 export default function Docente() {
   const [cargando, setCargando] = useState(false);

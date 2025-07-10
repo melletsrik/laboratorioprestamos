@@ -9,6 +9,7 @@ module.exports = {
   logging: false, // Esto desactiva los logs de SQL
    timezone: '-04:00', // Establece el timezone para Sequelize
   dialectOptions: {
-    timezone: 'Etc/GMT+4' // Evita que se convierta automáticamente a UTC
+    dateStrings: true, // Permite manejar fechas como strings
+    typeCast:true,
   }
 };

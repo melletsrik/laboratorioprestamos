@@ -40,13 +40,14 @@ export default function ListadoPrestamos() {
             'Accept': 'application/json'
           }
         });
-        console.log('Estado de la respuesta:', response.status);
+        
         if (!response.ok) {
           const errorData = await response.json().catch(() => {});
           console.error('Error en la respuesta:', {
             status: response.status,
             statusText: response.statusText,
             errorData
+            
           });
           throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
@@ -62,15 +63,11 @@ export default function ListadoPrestamos() {
             ...prestamo,
             id_estado: prestamo.id_estado || '0' // Valor por defecto si no tiene estado
           }));
-          
-          console.log('Préstamos recibidos:', prestamosConEstado);
-          console.log('Préstamos activos:', prestamosConEstado.filter(p => p.id_estado === '1'));
-          
+         
           if (prestamosConEstado.length > 0) {
-            console.log('Primer préstamo:', prestamosConEstado[0]);
-            console.log('Estado del primer préstamo:', 
-              typeof prestamosConEstado[0].id_estado, 
-              prestamosConEstado[0].id_estado
+            
+            console.log('prestamos cargado', 
+             
             );
           } else {
             console.log('No hay préstamos para mostrar');
@@ -116,7 +113,7 @@ export default function ListadoPrestamos() {
       apellidos: p_prestamo.estudiante?.persona?.apellido,
       asistente_entrega: p_prestamo.usuarioEntrega?.nombre + ' ' + p_prestamo.usuarioEntrega?.apellido,
       asistente_recepcion: usuarioActual.nombre + ' ' + usuarioActual.apellido,
-      descripcion: '', // Campo opcional para descripción
+  
       id_estado: 3, // Estado "Devuelto"
       fecha_devolucion: new Date().toISOString(),
       semestre: p_prestamo.semestre?.nombre || "",
@@ -124,7 +121,7 @@ export default function ListadoPrestamos() {
       id_docente: p_prestamo.docente?.id_docente,
       id_modulo: p_prestamo.id_modulo,
       id_semestre: p_prestamo.id_semestre || p_prestamo.semestre?.id_semestre,
-
+      observaciones: p_prestamo.observaciones || '', 
       detalles: p_prestamo.detalles.map(detalle => ({
         ...detalle,
           id_material: detalle.id_material,
@@ -195,11 +192,11 @@ export default function ListadoPrestamos() {
   // Filtrar préstamos basados en el término de búsqueda
   const filteredPrestamos = useMemo(() => {
     if (lLoading || !aPrestamos) return [];
-    if (!searchTerm) return aPrestamos.filter(p => String(p.id_estado) === '1');
+    if (!searchTerm) return aPrestamos.filter(p => ['1', '2'].includes(String(p.id_estado)));
     
     const searchLower = searchTerm.toLowerCase();
     return aPrestamos.filter(p => 
-      String(p.id_estado) === '1' && (
+      ['1','2'].includes(String(p.id_estado)) && (
         (p.estudiante?.persona?.nombre?.toLowerCase().includes(searchLower)) ||
         (p.estudiante?.persona?.apellido?.toLowerCase().includes(searchLower)) ||
         (p.estudiante?.Registro?.toLowerCase().includes(searchLower)) ||
@@ -306,6 +303,7 @@ export default function ListadoPrestamos() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MATERIAL</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CANTIDAD</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESTADO</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> OBSERVACIÓN</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACCIÓN</th>
                 </tr>
               </thead>
@@ -358,6 +356,8 @@ export default function ListadoPrestamos() {
                           {obtenerTextoEstado(Number(p.id_estado))}
                         </span>
                       </td>
+                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700"> {p.observaciones || '—'}</td>
+
                       <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <button
                           onClick={() => f_irAEditar(p.id_prestamo)}
