@@ -18,20 +18,12 @@ export default function RegistrarEstudiante() {
   const [estudianteEditar, setEstudianteEditar] = useState(null);
   const [mensaje, setMensaje] = useState("");
 
-  const token = Auth.getToken();
+  const token = Auth.getToken("token");
   const navegar = useNavigate();
 
   useEffect(() => {
-    // Verificar si el usuario está autenticado
     if (!token) {
       navegar("/");
-      return;
-    }
-
-    // Verificar si tiene permiso para registrar estudiantes
-    if (!Auth.hasPermission('estudiante:registrar')) {
-      navegar('/unauthorized');
-      return;
     }
   }, [token, navegar]);
 

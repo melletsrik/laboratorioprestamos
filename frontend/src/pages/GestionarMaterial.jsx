@@ -20,14 +20,17 @@ export default function GestionarMaterial() {
   const navegar = useNavigate();
  
   // Token de autenticación
-  const token = Auth.getToken("token"); // Obtenemos el token 
+  const token = Auth.getToken("token");
+  
+  // Redirigir al login si no hay token
   useEffect(() => {
-  if (!token) {
-    navegar("/");
-  }
-}, [token, navegar]);
-  //localStorage sirve para almacenar datos en el navegador, ej token JWT después de iniciar sesion
-if (!token)  return null;
+    if (!token) {
+      navegar("/");
+    }
+  }, [token, navegar]);
+
+  // Si no hay token, no renderizar nada (ya que se redirigirá)
+  if (!token) return null;
 
   // Función para cargar materiales desde el backend con caching
   const [cacheKey, setCacheKey] = useState(Date.now());
@@ -37,13 +40,25 @@ if (!token)  return null;
       return;
     }
 
+    // Verificar token antes de hacer la petición
+    if (!token) {
+      navegar("/");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await axios.get("http://localhost:4000/api/materiales", {
         headers: {
           Authorization: `Bearer ${token}`,
-        }
+        },
+        validateStatus: status => status >= 200 && status < 500
       });
+
+      // Manejar errores de autenticación
+      if (response.status === 401) {
+        throw new Error('Token inválido o expirado');
+      }
 
       if (response.data && response.data.success) {
         // Usamos directamente los datos del backend
@@ -58,6 +73,14 @@ if (!token)  return null;
       }
     } catch (error) {
       console.error("Error al cargar materiales:", error);
+      
+      // Manejar errores de autenticación
+      if (error.response?.status === 401 || error.message.includes('401') || error.message.includes('token')) {
+        Auth.clearToken();
+        navegar("/");
+        return;
+      }
+      
       setMateriales([]);
       setMaterialesFiltrados([]);
       setMensaje(`Error al cargar los materiales: ${error.response?.data?.message || error.message}`);
@@ -79,6 +102,12 @@ if (!token)  return null;
  
 const editarCantidad = async (codigoMaterial, nuevaCantidad) => {
   try {
+    // Verificar token antes de hacer la petición
+    if (!token) {
+      navegar("/");
+      return;
+    }
+
     const material = materiales.find(m => m.codigo_material === codigoMaterial);
     if (!material || nuevaCantidad < 0) return;
 
@@ -90,11 +119,22 @@ const editarCantidad = async (codigoMaterial, nuevaCantidad) => {
     setMaterialesFiltrados(materialesActualizados);
 
     // Actualizar en backend
-    await axios.put(`http://localhost:4000/api/materiales/${codigoMaterial}`, {
-      cantidad_total: nuevaCantidad
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await axios.put(
+      `http://localhost:4000/api/materiales/${codigoMaterial}`, 
+      { cantidad_total: nuevaCantidad },
+      { 
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        validateStatus: status => status >= 200 && status < 500
+      }
+    );
+
+    // Manejar error de autenticación
+    if (response.status === 401) {
+      throw new Error('Token inválido o expirado');
+    }
 
     setMensaje('Cantidad actualizada');
   } catch (error) {
@@ -105,9 +145,8 @@ const editarCantidad = async (codigoMaterial, nuevaCantidad) => {
 // Función para agregar material
 const AgregarMaterial = async (nuevoMaterial) => {
   try {
-    const token = Auth.getToken();
     if (!token) {
-      setMensaje('No hay sesión activa');
+      navegar("/");
       return false;
     }
 
@@ -142,7 +181,12 @@ const AgregarMaterial = async (nuevoMaterial) => {
     }
   } catch (error) {
     console.error("Error al agregar material:", error);
-    setMensaje(`Error al agregar material: ${error.response?.data?.message || error.message}`);
+    if (error.response?.status === 401 || error.message.includes('401') || error.message.includes('token')) {
+      Auth.clearToken();
+      navegar("/");
+      return false;
+    }
+    setMensaje('Error al agregar el material');
     return false;
   }
 };
@@ -168,13 +212,13 @@ return (
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => {
-  const rol = localStorage.getItem("rol");
-  if (rol === "Administrativo") {
-    navegar("/menu-admin");
-  } else {
-    navegar("/menu-aux");
-  }
-}}
+              const rol = localStorage.getItem("rol");
+              if (rol === "Administrativo") {
+                navegar("/menu-admin");
+              } else {
+                navegar("/menu-aux");
+              }
+            }}
             className="flex items-center gap-2 text-red-600 hover:text-red-900 font-semibold"
           >
             <IoArrowBackCircleOutline className="w-6 h-6" />

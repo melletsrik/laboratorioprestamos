@@ -22,9 +22,18 @@ function App() {
 
   // Initialize authentication when app loads
   useEffect(() => {
-    // Initialize auth
-    Auth.initAuth();
-    setIsInitialized(true);
+    const initializeAuth = async () => {
+      try {
+        // Initialize auth
+        await Auth.initAuth();
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        setIsInitialized(true); // Asegurarse de que la aplicación se renderice incluso si hay un error
+      }
+    };
+
+    initializeAuth();
     
     // Add a global error handler for 401 Unauthorized responses
     const originalFetch = window.fetch;
@@ -32,7 +41,7 @@ function App() {
       const response = await originalFetch.apply(this, args);
       if (response.status === 401) {
         Auth.clearToken();
-        window.location.href = '/login';
+        window.location.href = '/';
       }
       return response;
     };
@@ -47,9 +56,17 @@ function App() {
     return <div className="flex items-center justify-center min-h-screen">Cargando...</div>;
   }
 
+  // Redirigir a login si no está autenticado
+  const RequireAuth = ({ children }) => {
+    if (!Auth.isAuthenticated()) {
+      return <Navigate to="/" replace />;
+    }
+    return children;
+  };
+
   return (
     <BrowserRouter>
-    <ToastContainer
+      <ToastContainer
         position="top-right"
         autoClose={5000}
         hideProgressBar={false}
@@ -62,98 +79,99 @@ function App() {
         theme="light"
       />
       <Routes>
-        <Route path="/login" element={
-          Auth.isAuthenticated() ? (
-            Auth.getRol() === 'Administrativo' ? (
-              <Navigate to="/menu-admin" replace />
-            ) : (
-              <Navigate to="/menu-aux" replace />
-            )
+        <Route path="/" element={
+          !isInitialized ? (
+            <div className="flex items-center justify-center min-h-screen">Cargando...</div>
           ) : (
             <Login />
           )
         } />
-        
-        <Route path="/" element={
-          Auth.isAuthenticated() ? 
-            (Auth.getRol() === 'Administrativo' ? 
-              <Navigate to="/menu-admin" replace /> : 
-              <Navigate to="/menu-aux" replace />) : 
-            <Navigate to="/login" replace /> 
-        } />
-
-        {/* Protected Admin Routes */}
+        {/* Rutas protegidas */}
         <Route path="/menu-admin" element={
-          <ProtectedRoute requiredRole="Administrativo">
-            <MenuAdmin />
-          </ProtectedRoute>
+          <RequireAuth>
+            <ProtectedRoute requiredRole="Administrativo">
+              <MenuAdmin />
+            </ProtectedRoute>
+          </RequireAuth>
         } />
         
         <Route path="/registrar-estudiante" element={
-          <ProtectedRoute requiredRole="Administrativo">
-            <RegistrarEstudiante />
-          </ProtectedRoute>
+          <RequireAuth>
+            <ProtectedRoute requiredRole="Administrativo">
+              <RegistrarEstudiante />
+            </ProtectedRoute>
+          </RequireAuth>
         } />
         
         <Route path="/VentanaUsuario" element={
-          <ProtectedRoute requiredRole="Administrativo">
-            <VentanaUsuario />
-          </ProtectedRoute>
+          <RequireAuth>
+            <ProtectedRoute requiredRole="Administrativo">
+              <VentanaUsuario />
+            </ProtectedRoute>
+          </RequireAuth>
         } />
 
-        {/* Protected Auxiliar Routes */}
+        {/* Rutas de Auxiliar */}
         <Route path="/menu-aux" element={
-          <ProtectedRoute requiredRole="Auxiliar">
-            <MenuAux />
-          </ProtectedRoute>
+          <RequireAuth>
+            <ProtectedRoute requiredRole="Auxiliar">
+              <MenuAux />
+            </ProtectedRoute>
+          </RequireAuth>
         } />
 
-        {/* Protected Routes for Both Roles */}
+        {/* Rutas protegidas para ambos roles */}
         <Route path="/registrar-prestamo" element={
-          <ProtectedRoute>
-            <RegistrarPrestamo />
-          </ProtectedRoute>
+          <RequireAuth>
+            <ProtectedRoute>
+              <RegistrarPrestamo />
+            </ProtectedRoute>
+          </RequireAuth>
         } />
         
         <Route path="/prestamo-activos" element={
-          <ProtectedRoute>
-            <ListadoPrestamos />
-          </ProtectedRoute>
+          <RequireAuth>
+            <ProtectedRoute>
+              <ListadoPrestamos />
+            </ProtectedRoute>
+          </RequireAuth>
         } />
         
         <Route path="/material" element={
-          <ProtectedRoute>
-            <GestionarMaterial />
-          </ProtectedRoute>
+          <RequireAuth>
+            <ProtectedRoute>
+              <GestionarMaterial />
+            </ProtectedRoute>
+          </RequireAuth>
         } />
         
         <Route path="/docentes" element={
-          <ProtectedRoute>
-            <Docente />
-          </ProtectedRoute>
+          <RequireAuth>
+            <ProtectedRoute>
+              <Docente />
+            </ProtectedRoute>
+          </RequireAuth>
         } />
         
         <Route path="/VentanaMateria" element={
-          <ProtectedRoute>
-            <VentanaMateria />
-          </ProtectedRoute>
+          <RequireAuth>
+            <ProtectedRoute>
+              <VentanaMateria />
+            </ProtectedRoute>
+          </RequireAuth>
         } />
         
         <Route path="/ReportePrestamo" element={
-          <ProtectedRoute>
-            <ReportePrestamo />
-          </ProtectedRoute>
+          <RequireAuth>
+            <ProtectedRoute>
+              <ReportePrestamo />
+            </ProtectedRoute>
+          </RequireAuth>
         } />
         
-        {/* Catch all other routes */}
+        {/* Redirigir a login para rutas no coincidentes */}
         <Route path="*" element={
-          Auth.isAuthenticated() ? 
-            <Navigate to={
-              Auth.getRol() === 'Administrativo' ? 
-                "/menu-admin" : 
-                "/menu-aux"
-            } replace /> : 
-            <Navigate to="/login" replace />
+          <Navigate to="/" replace />
         } />
       </Routes>
     </BrowserRouter>

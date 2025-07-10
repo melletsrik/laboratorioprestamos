@@ -18,11 +18,8 @@ export default function VentanaUsuario() {
 const navegar = useNavigate();
 const token = Auth.getToken();
 const rol = Auth.getRol(); 
-  useEffect(() => {
-    if (!token) {
-      navegar("/");
-    }
-  }, [token, navegar]);
+  // La verificación de autenticación y roles se maneja en las rutas protegidas
+  // en App.jsx usando el componente ProtectedRoute
 
   
  // Función para cargar usuarios desde el backend
