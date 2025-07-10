@@ -97,7 +97,7 @@ function App() {
         
         <Route path="/registrar-estudiante" element={
           <RequireAuth>
-            <ProtectedRoute requiredRole="Administrativo">
+            <ProtectedRoute>
               <RegistrarEstudiante />
             </ProtectedRoute>
           </RequireAuth>
