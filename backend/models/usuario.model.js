@@ -18,7 +18,10 @@ module.exports = (sequelize, DataTypes) => {
       nombre_usuario: {
         type: DataTypes.STRING(50),
         allowNull: false,
-        unique: true,
+          unique: {
+    name: "uq_usuario_nombre_usuario",
+    msg: "Este nombre de usuario ya está en uso"
+  }
       },
       password_: {
         type: DataTypes.STRING(255),

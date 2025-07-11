@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
       id_estudiante: {
         type: DataTypes.INTEGER,
         primaryKey: true,
-        autoIncrement: true,
+       // autoIncrement: true,
       },
       id_persona: {
         type: DataTypes.INTEGER,
@@ -14,7 +14,10 @@ module.exports = (sequelize, DataTypes) => {
       Registro: {
         type: DataTypes.STRING(25),
         allowNull: false,
-        unique: true,
+        unique: {
+    name: "uq_estudiante_registro",
+    msg: "Este número de registro ya está en uso",
+  }
       }
     },
     {
